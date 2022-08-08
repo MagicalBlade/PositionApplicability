@@ -1,0 +1,30 @@
+﻿<Window x:Class="PositionApplicability.MainWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+        xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+        xmlns:local="clr-namespace:PositionApplicability" xmlns:viewmodels="clr-namespace:PositionApplicability.ViewModels"
+        mc:Ignorable="d"
+        Title="Применяемость позиций" Height="235" Width="373">
+
+    <Window.DataContext>
+        <viewmodels:MainWindowViewModel/>
+    </Window.DataContext>
+
+    <Grid>
+        <Grid.RowDefinitions>
+            <RowDefinition/>
+            <RowDefinition Height="25"/>
+        </Grid.RowDefinitions>
+        <StackPanel Grid.Row="0" Orientation="Vertical">
+            <StackPanel Orientation="Horizontal">
+                <Label Content="Путь к файлам:" Padding="3" Margin="3"/>
+                <TextBox Width="100" Height="25" Padding="3" Margin="3" Text="{Binding PathFolder}"/>
+            </StackPanel>
+            <Button Content="Выбрать папку" Width="90" Padding="3" Margin="3"  Command="{Binding OpenFolderDialogCommand}"/>
+        </StackPanel>
+        <StatusBar Grid.Row="1">
+            <TextBlock/>
+        </StatusBar>
+    </Grid>
+</Window>
