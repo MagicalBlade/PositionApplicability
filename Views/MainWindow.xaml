@@ -22,9 +22,11 @@
                 <TextBox Width="100" Height="25" Padding="3" Margin="3" Text="{Binding PathFolder}"/>
             </StackPanel>
             <Button Content="Выбрать папку" Width="90" Padding="3" Margin="3"  Command="{Binding OpenFolderDialogCommand}"/>
+            <Button Content="Извлечение позиций" Width="130" Padding="3" Margin="3"  Command="{Binding ExtractionPositionsCommand}"/>
+            <Button Content="Сохранить в Excel" Width="110" Padding="3" Margin="3"  Command="{Binding SaveExcelCommand}"/>
         </StackPanel>
         <StatusBar Grid.Row="1">
-            <TextBlock/>
+            <TextBlock Text="{Binding Info}"/>
         </StatusBar>
     </Grid>
 </Window>
