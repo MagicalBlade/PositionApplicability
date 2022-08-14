@@ -56,9 +56,9 @@ namespace PositionApplicability.Data
         public string? List { get => _list; set => _list = value; }
         private string? _list;
 
-        public PosData(ITable table, int row, string nameFile)
+        public PosData(ITable table, int row, string nameMark)
         {
-            Mark = nameFile;
+            Mark = nameMark;
             Pos = ((IText)table.Cell[row, 0].Text).Str;
             Quantity = ((IText)table.Cell[row, 1].Text).Str;
             Size = ((IText)table.Cell[row, 3].Text).Str;

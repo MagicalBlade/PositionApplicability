@@ -3,10 +3,10 @@
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
         xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+        xmlns:cm="clr-namespace:System.ComponentModel;assembly=System"
         xmlns:local="clr-namespace:PositionApplicability" xmlns:viewmodels="clr-namespace:PositionApplicability.ViewModels"
         mc:Ignorable="d"
-        Title="Применяемость позиций" Height="235" Width="373">
-
+        Title="Применяемость позиций" Height="400" Width="373">
     <Window.DataContext>
         <viewmodels:MainWindowViewModel/>
     </Window.DataContext>
@@ -15,17 +15,34 @@
         <Grid.RowDefinitions>
             <RowDefinition/>
             <RowDefinition Height="25"/>
+            <RowDefinition Height="25"/>
         </Grid.RowDefinitions>
         <StackPanel Grid.Row="0" Orientation="Vertical">
-            <StackPanel Orientation="Horizontal">
-                <Label Content="Путь к файлам:" Padding="3" Margin="3"/>
-                <TextBox Width="100" Height="25" Padding="3" Margin="3" Text="{Binding PathFolder}"/>
+            <DockPanel>
+                <Button Content="Указать путь к сборкам:" Padding="3" Margin="3"  Command="{Binding OpenFolderDialogAssemblyCommand}"/>
+                <TextBox Height="25" Padding="3" Margin="3" Text="{Binding PathFolderAssembly}"/>
+            </DockPanel>
+            <DockPanel>
+                <Label Content="Текст для поиска спецификации:" Padding="3" Margin="3"/>
+                <TextBox ToolTip="Укажите характерные слова, по которым можно будет найти спецификацию" Height="25" Padding="3" Margin="3" Text="{Binding StrSearchTableAssembly}"/>
+            </DockPanel>
+            <ProgressBar Grid.Row="1" Height="25" Value = "{Binding PBExtraction_Value}"/>
+            <StackPanel Orientation="Horizontal" HorizontalAlignment="Center">
+                <Button Content="Извлечение позиций" HorizontalAlignment="Center" Padding="3" Margin="3" Command="{Binding ExtractionPositionsCommand}"/>
+                <Button Content="Отмена" HorizontalAlignment="Center" Padding="3" Margin="3" Command="{Binding CancelExtractionPositionsCommand}"/>
             </StackPanel>
-            <Button Content="Выбрать папку" Width="90" Padding="3" Margin="3"  Command="{Binding OpenFolderDialogCommand}"/>
-            <Button Content="Извлечение позиций" Width="130" Padding="3" Margin="3"  Command="{Binding ExtractionPositionsCommand}"/>
-            <Button Content="Сохранить в Excel" Width="110" Padding="3" Margin="3"  Command="{Binding SaveExcelCommand}"/>
+            <DockPanel>
+                <Button Content="Указать путь к деталям:" HorizontalAlignment="Center" Padding="3" Margin="3"  Command="{Binding OpenFolderDialogPosCommand}"/>
+                <TextBox Height="25" Padding="3" Margin="3" Text="{Binding PathFolderPos}"/>
+            </DockPanel>
+            <DockPanel>
+                <Label Content="Текст для поиска таблицы применяемости:" Padding="3" Margin="3"/>
+                <TextBox ToolTip="Укажите характерные слова, по которым можно будет найти таблицу применяемости в деталировке" Height="25" Padding="3" Margin="3" Text="{Binding StrSearchTablePos}"/>
+            </DockPanel>
+            <Button Content="Сохранить в Excel" HorizontalAlignment="Center" Padding="3" Margin="3"  Command="{Binding SaveExcelCommand}"/>
+            <Button Content="Заполнить деталировку" HorizontalAlignment="Center" Padding="3" Margin="3"  Command="{Binding FillPosCommand}"/>
         </StackPanel>
-        <StatusBar Grid.Row="1">
+        <StatusBar Grid.Row="2">
             <TextBlock Text="{Binding Info}"/>
         </StatusBar>
     </Grid>
