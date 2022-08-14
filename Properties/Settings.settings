@@ -12,7 +12,8 @@
       <Value Profile="(Default)">Спецификация</Value>
     </Setting>
     <Setting Name="StrSearchTablePos" Type="System.String" Scope="User">
-      <Value Profile="(Default)">поз.</Value>
+      <Value Profile="(Default)">Кол-во
+</Value>
     </Setting>
   </Settings>
 </SettingsFile>

@@ -12,18 +12,13 @@ namespace PositionApplicability.Data
         /// <summary>
         /// Наименование марки
         /// </summary>
-        public string? Mark { get => _mark; set => _mark = value; }
-        private string? _mark;
+        public List<string[]> Mark { get => _mark; set => _mark = value; }
+        private List<string[]> _mark = new();
         /// <summary>
         /// Номер позиции
         /// </summary>
         public string? Pos { get => _pos; set => _pos = value; }
         private string? _pos;
-        /// <summary>
-        /// Количество позиций
-        /// </summary>
-        public string? Quantity { get => _quantity; set => _quantity = value; }
-        private string? _quantity;
         /// <summary>
         /// Сечение позиции (толщина х ширина)
         /// </summary>
@@ -58,15 +53,28 @@ namespace PositionApplicability.Data
 
         public PosData(ITable table, int row, string nameMark)
         {
-            Mark = nameMark;
             Pos = ((IText)table.Cell[row, 0].Text).Str;
-            Quantity = ((IText)table.Cell[row, 1].Text).Str;
             Size = ((IText)table.Cell[row, 3].Text).Str;
             Leigth = ((IText)table.Cell[row, 4].Text).Str;
             Steel = ((IText)table.Cell[row, 5].Text).Str;
             Weight = ((IText)table.Cell[row, 6].Text).Str;
             TotalMass = ((IText)table.Cell[row, 7].Text).Str;
             List = ((IText)table.Cell[row, 8].Text).Str;
+
+            Mark.Add(new string[2] 
+            {
+                nameMark,
+                ((IText)table.Cell[row, 1].Text).Str
+            });
+        }
+        public bool AddMark(string nameMark, string quantity)
+        {
+            Mark.Add(new string[2]
+            {
+                nameMark,
+                quantity
+            });
+            return true;
         }
     }
 }

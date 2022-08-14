@@ -34,7 +34,7 @@
             <ProgressBar Height="25" Value = "{Binding PBExtraction_Value}"/>
             <StackPanel Orientation="Horizontal" HorizontalAlignment="Center">
                 <Button Content="Извлечение позиций" HorizontalAlignment="Center" Padding="3" Margin="3" Command="{Binding ExtractionPositionsCommand}"/>
-                <Button Content="Отмена" HorizontalAlignment="Center" Padding="3" Margin="3" Command="{Binding CancelExtractionPositionsCommand}"/>
+                <Button Content="Отмена" HorizontalAlignment="Center" Padding="3" Margin="3" Command="{Binding ExtractionPositionsCancelCommand}"/>
             </StackPanel>
             <DockPanel>
                 <Button Content="Указать путь к деталям:" HorizontalAlignment="Center" Padding="3" Margin="3"  Command="{Binding OpenFolderDialogPosCommand}"/>
@@ -44,8 +44,12 @@
                 <Label Content="Текст для поиска таблицы применяемости:" Padding="3" Margin="3"/>
                 <TextBox ToolTip="Укажите характерные слова, по которым можно будет найти таблицу применяемости в деталировке" Height="25" Padding="3" Margin="3" Text="{Binding StrSearchTablePos}"/>
             </DockPanel>
+            <ProgressBar Height="25" Value = "{Binding PBFill_Value}"/>
+            <StackPanel Orientation="Horizontal" HorizontalAlignment="Center">
+                <Button Content="Заполнить деталировку" HorizontalAlignment="Center" Padding="3" Margin="3"  Command="{Binding FillPosCommand}"/>   
+                <Button Content="Отмена" HorizontalAlignment="Center" Padding="3" Margin="3"  Command="{Binding FillPosCancelCommand}"/>
+            </StackPanel>
             <Button Content="Сохранить в Excel" HorizontalAlignment="Center" Padding="3" Margin="3"  Command="{Binding SaveExcelCommand}"/>
-            <Button Content="Заполнить деталировку" HorizontalAlignment="Center" Padding="3" Margin="3"  Command="{Binding FillPosCommand}"/>
         </StackPanel>
         <StatusBar Grid.Row="1">
             <TextBlock Text="{Binding Info}"/>

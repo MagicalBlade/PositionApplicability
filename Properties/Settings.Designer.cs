@@ -61,7 +61,7 @@ namespace PositionApplicability.Properties {
         
         [global::System.Configuration.UserScopedSettingAttribute()]
         [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
-        [global::System.Configuration.DefaultSettingValueAttribute("поз.")]
+        [global::System.Configuration.DefaultSettingValueAttribute("Кол-во\r\n")]
         public string StrSearchTablePos {
             get {
                 return ((string)(this["StrSearchTablePos"]));
