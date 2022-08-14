@@ -1,0 +1,18 @@
+﻿<?xml version='1.0' encoding='utf-8'?>
+<SettingsFile xmlns="http://schemas.microsoft.com/VisualStudio/2004/01/settings" CurrentProfile="(Default)" GeneratedClassNamespace="PositionApplicability.Properties" GeneratedClassName="Settings">
+  <Profiles />
+  <Settings>
+    <Setting Name="PathFolderAssembly" Type="System.String" Scope="User">
+      <Value Profile="(Default)" />
+    </Setting>
+    <Setting Name="PathFolderPos" Type="System.String" Scope="User">
+      <Value Profile="(Default)" />
+    </Setting>
+    <Setting Name="StrSearchTableAssembly" Type="System.String" Scope="User">
+      <Value Profile="(Default)">Спецификация</Value>
+    </Setting>
+    <Setting Name="StrSearchTablePos" Type="System.String" Scope="User">
+      <Value Profile="(Default)">поз.</Value>
+    </Setting>
+  </Settings>
+</SettingsFile>

@@ -16,19 +16,17 @@ namespace PositionApplicability.ViewModels
     internal partial class MainWindowViewModel : ObservableObject
     {
         [ObservableProperty]
-        private string _pathFolderAssembly = "";
+        private string _pathFolderAssembly = Properties.Settings.Default.PathFolderAssembly;
         [ObservableProperty]
-        private string _pathFolderPos = "";
+        private string _pathFolderPos = Properties.Settings.Default.PathFolderPos;
         [ObservableProperty]
-        private string _strSearchTableAssembly = "Спецификация";
+        private string _strSearchTableAssembly = Properties.Settings.Default.StrSearchTableAssembly;
         [ObservableProperty]
-        private string _strSearchTablePos = "поз.";
+        private string _strSearchTablePos = Properties.Settings.Default.StrSearchTablePos;
         [ObservableProperty]
         private string? _info;
-
         [ObservableProperty]
         private double _pBExtraction_Value = 0;
-
         [ObservableProperty]
         private List<PosData> _posList = new();
         
@@ -37,6 +35,8 @@ namespace PositionApplicability.ViewModels
         private List<string> _log = new();
 
 
+
+        #region Извлечение позиций
         [RelayCommand(IncludeCancelCommand = true)]
         private async Task ExtractionPositions(CancellationToken token)
         {
@@ -117,11 +117,15 @@ namespace PositionApplicability.ViewModels
             PBExtraction_Value = 100;
             Info = "Позиции извлечены";
         }
+        /// <summary>
+        /// Отмена извлечения позиций
+        /// </summary>
         [RelayCommand]
         private void CancelExtractionPositions()
         {
             ExtractionPositionsCommand.Cancel();
-        }
+        } 
+        #endregion
 
         [RelayCommand]
         private void OpenFolderDialogAssembly()
@@ -143,6 +147,7 @@ namespace PositionApplicability.ViewModels
                 PathFolderPos = dialog.SelectedPath;
             }
         }
+        #region Заполнение деталировки
         [RelayCommand]
         private void FillPos()
         {
@@ -192,7 +197,8 @@ namespace PositionApplicability.ViewModels
             kompasDocuments2D.Close(Kompas6Constants.DocumentCloseOptions.kdDoNotSaveChanges);
             kompas.Quit();
             Info = "Таблица применяемости заполнена";
-        }
+        } 
+        #endregion
         [RelayCommand]
         private void SaveExcel()
         {
@@ -273,6 +279,16 @@ namespace PositionApplicability.ViewModels
             }
             Info = "Файл сохранен";
             
+        }
+
+        [RelayCommand]
+        private void Closing()
+        {
+            Properties.Settings.Default.PathFolderAssembly = PathFolderAssembly;
+            Properties.Settings.Default.PathFolderPos = PathFolderPos;
+            Properties.Settings.Default.StrSearchTableAssembly = StrSearchTableAssembly;
+            Properties.Settings.Default.StrSearchTablePos = StrSearchTablePos;
+            Properties.Settings.Default.Save();
         }
     }
 }
