@@ -68,6 +68,7 @@ namespace PositionApplicability.ViewModels
         }
         private async Task ExtractionPositionsAsync(CancellationToken token)
         {
+            ExtractionLog.Clear();
             Info = "Началось извлечение позиций";
             PBExtraction_Value = 1;
             string[] assemblyFiles = Directory.GetFiles(PathFolderAssembly, "*.cdw", SearchOption.TopDirectoryOnly);
@@ -88,7 +89,11 @@ namespace PositionApplicability.ViewModels
             foreach (string pathfile in assemblyFiles)
             {
                 IKompasDocument2D kompasDocuments2D = (IKompasDocument2D)documents.Open(pathfile, false, false);
-                if (kompasDocuments2D == null) continue;
+                if (kompasDocuments2D == null)
+                {
+                    ExtractionLog.Add($"{pathfile} - не удалось открыть чертеж");
+                    continue;
+                }
                 #region Получение имени марки из штампа
                 ILayoutSheets layoutSheets = kompasDocuments2D.LayoutSheets;
                 string NameMark = "";
@@ -102,6 +107,7 @@ namespace PositionApplicability.ViewModels
                 #endregion
                 IViewsAndLayersManager viewsAndLayersManager = kompasDocuments2D.ViewsAndLayersManager;
                 IViews views = viewsAndLayersManager.Views;
+                bool foundTable = false;
                 foreach (IView view in views)
                 {
                     ISymbols2DContainer symbols2DContainer = (ISymbols2DContainer)view;
@@ -111,10 +117,12 @@ namespace PositionApplicability.ViewModels
                         IText text = (IText)table.Cell[0, 0].Text;
                         if (text.Str.IndexOf(StrSearchTableAssembly) != -1 && table.RowsCount > 2 && table.ColumnsCount == 9)
                         {
+                            foundTable = true;
                             for (int row = 3; row < table.RowsCount; row++)
                             {
                                 if (((IText)table.Cell[row, 1].Text).Str != "")
                                 {
+                                    foundTable = true;
                                     int markIndex = PosList.FindIndex(x => x.Pos == ((IText)table.Cell[row, 0].Text).Str);
                                     if (markIndex != -1)
                                     {
@@ -128,6 +136,10 @@ namespace PositionApplicability.ViewModels
                             }
                         }
                     }
+                }
+                if (!foundTable)
+                {
+                    ExtractionLog.Add($"{kompasDocuments2D.Name} - таблица не соответствует формату или не найдена");
                 }
                 kompasDocuments2D.Close(Kompas6Constants.DocumentCloseOptions.kdDoNotSaveChanges);
                 if (token.IsCancellationRequested)
@@ -190,6 +202,7 @@ namespace PositionApplicability.ViewModels
         }
         private async Task FillPosAsync(CancellationToken token)
         {
+            FillLog.Clear();
             Info = "Началось заполнение деталировки";
             PBFill_Value = 1;
             string[] posFiles = Directory.GetFiles(PathFolderPos, "*.cdw", SearchOption.TopDirectoryOnly);
@@ -216,17 +229,23 @@ namespace PositionApplicability.ViewModels
 
                 if (path.Length == 0)
                 {
-                    //Записать в журнал, что не найдены файлы для данной позиции
+                    FillLog.Add($"поз. {pos.Pos} - деталировка не найдена");
                     continue;
                 }
                 else if(path.Length > 1)
                 {
-                    //Записать в журнал, что найдено несколько файлов чертежа позиции
+                    FillLog.Add($"поз. {pos.Pos} - найдено более одного чертежа деталировки");
                     continue;
                 }
                 IKompasDocument2D kompasDocuments2D = (IKompasDocument2D)documents.Open(path[0], false, false);
+                if (kompasDocuments2D == null)
+                {
+                    FillLog.Add($"поз. {pos.Pos} - не удалось открыть чертеж");
+                    continue;
+                }
                 IViewsAndLayersManager viewsAndLayersManager = kompasDocuments2D.ViewsAndLayersManager;
                 IViews views = viewsAndLayersManager.Views;
+                bool foundTable = false;
                 foreach (IView view in views)
                 {
                     ISymbols2DContainer symbols2DContainer = (ISymbols2DContainer)view;
@@ -237,6 +256,7 @@ namespace PositionApplicability.ViewModels
                         IText text = (IText)table.Cell[0, 0].Text;
                         if (text.Str.IndexOf(StrSearchTablePos) != -1 && table.RowsCount > 1 && table.ColumnsCount == 2)
                         {
+                            foundTable = true;
                             for (int indexrow = 0; indexrow < pos.Mark.Count + 1 - table.RowsCount; indexrow++)
                             {
                                 table.AddRow(indexrow + 1, true);
@@ -250,7 +270,16 @@ namespace PositionApplicability.ViewModels
                         }
                     }
                 }
+
+                if (!foundTable)
+                {
+                    FillLog.Add($"{kompasDocuments2D.Name} - таблица не соответствует формату или не найдена");
+                }
                 kompasDocuments2D.Save();
+                if (kompasDocuments2D.Changed)
+                {
+                    FillLog.Add($"{kompasDocuments2D.Name} - не удалось сохранить");
+                }
                 kompasDocuments2D.Close(Kompas6Constants.DocumentCloseOptions.kdDoNotSaveChanges);
                 if (token.IsCancellationRequested)
                 {
