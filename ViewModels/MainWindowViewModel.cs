@@ -6,6 +6,7 @@ using KompasAPI7;
 using PositionApplicability.Data;
 using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.IO;
 using System.Linq;
 using System.Text.RegularExpressions;
@@ -40,9 +41,12 @@ namespace PositionApplicability.ViewModels
         [ObservableProperty]
         private List<PosData> _posList = new();
         
-        public List<string> Log { get => _log; set => _log = value; }
+        public List<string> ExtractionLog { get => _Extractionlog; set => _Extractionlog = value; }
+        private List<string> _Extractionlog = new();
 
-        private List<string> _log = new();
+        public List<string> FillLog { get => _Filllog; set => _Filllog = value; }
+        private List<string> _Filllog = new();
+
 
         #region Извлечение позиций
         [RelayCommand(IncludeCancelCommand = true)]
@@ -137,6 +141,7 @@ namespace PositionApplicability.ViewModels
             }
             kompas.Quit();
             PBExtraction_Value = 100;
+            WriteLog(ExtractionLog, "ExtractionLog");
             Info = "Позиции извлечены";
         }
         #endregion
@@ -257,6 +262,7 @@ namespace PositionApplicability.ViewModels
                 PBFill_Value += 90 / posFiles.Length;
             }
             kompas.Quit();
+            WriteLog(FillLog, "FillLog");
             PBFill_Value = 100;
             Info = "Заполнение деталировки завершено";
         }
@@ -353,6 +359,52 @@ namespace PositionApplicability.ViewModels
             Properties.Settings.Default.StrSearchTableAssembly = StrSearchTableAssembly;
             Properties.Settings.Default.StrSearchTablePos = StrSearchTablePos;
             Properties.Settings.Default.Save();
+        }
+
+        /// <summary>
+        /// Открыть файл журнала
+        /// </summary>
+        /// <param name="namelog"></param>
+        [RelayCommand]
+        private void OpenLog(string namelog)
+        {
+            Info = "";
+            if (File.Exists($"{namelog}.txt"))
+            {
+                var process = new Process();
+                process.StartInfo = new ProcessStartInfo($"{namelog}.txt")
+                {
+                    UseShellExecute = true,
+                };
+                process.Start();
+            }
+            else
+            {
+                Info = "Файл журнала не найден.";
+            }
+        }
+
+        /// <summary>
+        /// Запись логов
+        /// </summary>
+        /// <param name="log"></param>
+        private void WriteLog(List<string> log, string nameLog)
+        {
+            try
+            {
+                using (StreamWriter sw = new($"{nameLog}.txt", false))
+                {
+                    foreach (var item in log)
+                    {
+                        sw.WriteLine(item);
+                    }
+                    sw.Close();
+                }
+            }
+            catch (Exception)
+            {
+                Info = $"Не удалось сохранить файл журнала {nameLog}";
+            }
         }
     }
 }

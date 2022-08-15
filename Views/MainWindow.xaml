@@ -35,6 +35,7 @@
             <StackPanel Orientation="Horizontal" HorizontalAlignment="Center">
                 <Button Content="Извлечение позиций" HorizontalAlignment="Center" Padding="3" Margin="3" Command="{Binding ExtractionPositionsCommand}"/>
                 <Button Content="Отмена" HorizontalAlignment="Center" Padding="3" Margin="3" Command="{Binding ExtractionPositionsCancelCommand}"/>
+                <Button Content="Журнал" HorizontalAlignment="Center" Padding="3" Margin="3" Command="{Binding OpenLogCommand}" CommandParameter="ExtractionLog"/>
             </StackPanel>
             <DockPanel>
                 <Button Content="Указать путь к деталям:" HorizontalAlignment="Center" Padding="3" Margin="3"  Command="{Binding OpenFolderDialogPosCommand}"/>
@@ -48,6 +49,7 @@
             <StackPanel Orientation="Horizontal" HorizontalAlignment="Center">
                 <Button Content="Заполнить деталировку" HorizontalAlignment="Center" Padding="3" Margin="3"  Command="{Binding FillPosCommand}"/>   
                 <Button Content="Отмена" HorizontalAlignment="Center" Padding="3" Margin="3"  Command="{Binding FillPosCancelCommand}"/>
+                <Button Content="Журнал" HorizontalAlignment="Center" Padding="3" Margin="3" Command="{Binding OpenLogCommand}" CommandParameter="FillLog"/>
             </StackPanel>
             <Button Content="Сохранить в Excel" HorizontalAlignment="Center" Padding="3" Margin="3"  Command="{Binding SaveExcelCommand}"/>
         </StackPanel>
