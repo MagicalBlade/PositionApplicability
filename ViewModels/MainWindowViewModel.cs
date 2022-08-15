@@ -7,6 +7,8 @@ using PositionApplicability.Data;
 using System;
 using System.Collections.Generic;
 using System.IO;
+using System.Linq;
+using System.Text.RegularExpressions;
 using System.Threading;
 using System.Threading.Tasks;
 using System.Windows.Forms;
@@ -202,7 +204,10 @@ namespace PositionApplicability.ViewModels
             IDocuments documents = application.Documents;
             foreach (PosData pos in PosList)
             {
-                string[] path = Directory.GetFiles(PathFolderPos, $"*Поз*{pos.Pos}*.cdw");
+                Regex re = new Regex($@"поз.*\D{pos.Pos}\D.*cdw", RegexOptions.IgnoreCase);
+                string[] path = Directory.GetFiles(PathFolderPos, $"*поз*{pos.Pos}*.cdw")
+                    .Where(path => re.IsMatch(path))
+                    .ToArray();
 
                 if (path.Length == 0)
                 {
@@ -211,7 +216,7 @@ namespace PositionApplicability.ViewModels
                 }
                 else if(path.Length > 1)
                 {
-                    //Записать в журнал, чертежей больше одного
+                    //Записать в журнал, что найдено несколько файлов чертежа позиции
                     continue;
                 }
                 IKompasDocument2D kompasDocuments2D = (IKompasDocument2D)documents.Open(path[0], false, false);
