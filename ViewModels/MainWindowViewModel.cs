@@ -115,18 +115,18 @@ namespace PositionApplicability.ViewModels
                     foreach (ITable table in drawingTables)
                     {
                         IText text = (IText)table.Cell[0, 0].Text;
-                        if (text.Str.IndexOf(StrSearchTableAssembly) != -1 && table.RowsCount > 2 && table.ColumnsCount == 9)
+                        if (text.Str.IndexOf(StrSearchTableAssembly) != -1 && table.RowsCount > 2 && table.ColumnsCount == 10)
                         {
                             foundTable = true;
                             for (int row = 3; row < table.RowsCount; row++)
                             {
-                                if (((IText)table.Cell[row, 1].Text).Str != "")
+                                if (((IText)table.Cell[row, 0].Text).Str != "" && (((IText)table.Cell[row, 1].Text).Str != "" || ((IText)table.Cell[row, 2].Text).Str != ""))
                                 {
                                     foundTable = true;
                                     int markIndex = PosList.FindIndex(x => x.Pos == ((IText)table.Cell[row, 0].Text).Str);
                                     if (markIndex != -1)
                                     {
-                                        PosList[markIndex].AddMark(NameMark,((IText)table.Cell[row, 1].Text).Str);
+                                        PosList[markIndex].AddMark(NameMark,((IText)table.Cell[row, 1].Text).Str, ((IText)table.Cell[row, 2].Text).Str);
                                     }
                                     else
                                     {
@@ -309,11 +309,9 @@ namespace PositionApplicability.ViewModels
             //Сортировка списака по номеру позиции
             static int ComparePosData(PosData x, PosData y)
             {
-                double xd = double.Parse(x.Pos.Replace(".", ","));
-                double yd = double.Parse(y.Pos.Replace(".", ","));
-                if (x.Pos == null)
+                if (x.Pos == null || x.Pos == "")
                 {
-                    if (y.Pos == null)
+                    if (y.Pos == null || y.Pos == "")
                     {
                         return 0;
                     }
@@ -322,11 +320,13 @@ namespace PositionApplicability.ViewModels
                         return -1;
                     }
                 }
-                else if (y.Pos == null)
+                else if (y.Pos == null || y.Pos == "")
                 {
                     return 1;
                 }
-                else if (xd > yd)
+                double xd = double.Parse(x.Pos.Replace(".", ","));
+                double yd = double.Parse(y.Pos.Replace(".", ","));
+                if (xd > yd)
                 {
                     return 1;
                 }
@@ -349,19 +349,23 @@ namespace PositionApplicability.ViewModels
                 {
                     for (int markIndex = 0; markIndex < PosList[i].Mark.Count; markIndex++)
                     {
+                        
                         worksheet.Cell(i + incrementRow + 1, 1).Value = PosList[i].Pos;
-                        worksheet.Cell(i + incrementRow + 1, 2).Value = PosList[i].Mark[markIndex][0];
-                        worksheet.Cell(i + incrementRow + 1, 3).Value = PosList[i].Mark[markIndex][1];
-                        worksheet.Cell(i + incrementRow + 1, 4).Value = PosList[i].Size;
-                        worksheet.Cell(i + incrementRow + 1, 5).Value = PosList[i].Leigth;
-                        worksheet.Cell(i + incrementRow + 1, 6).Value = PosList[i].Steel;
+                        worksheet.Cell(i + incrementRow + 1, 2).Value = PosList[i].Mark[markIndex][1];
+                        worksheet.Cell(i + incrementRow + 1, 3).Value = PosList[i].Mark[markIndex][2];
+                        worksheet.Cell(i + incrementRow + 1, 4).Value = PosList[i].Thickness;
+                        worksheet.Cell(i + incrementRow + 1, 5).Value = PosList[i].Width;
+                        worksheet.Cell(i + incrementRow + 1, 6).Value = PosList[i].Leigth;
                         worksheet.Cell(i + incrementRow + 1, 7).Value = PosList[i].Weight;
                         worksheet.Cell(i + incrementRow + 1, 8).Value = PosList[i].TotalMass;
-                        worksheet.Cell(i + incrementRow + 1, 9).Value = PosList[i].List;
+                        worksheet.Cell(i + incrementRow + 1, 9).Value = PosList[i].Steel;
+                        worksheet.Cell(i + incrementRow + 1, 10).Value = PosList[i].List;
+                        worksheet.Cell(i + incrementRow + 1, 11).Value = PosList[i].Mark[markIndex][0];
                         incrementRow++;
                     }
                     incrementRow--;
                 }
+                worksheet.DataType = XLDataType.Text;
                 //Ширина колонки по содержимому
                 worksheet.Columns(1, PosList.Count).AdjustToContents();
                 worksheet.Columns(1, PosList.Count).Style.Alignment.SetHorizontal(XLAlignmentHorizontalValues.Center);
