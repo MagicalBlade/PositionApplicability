@@ -257,7 +257,7 @@ namespace PositionApplicability.ViewModels
                         if (text.Str.IndexOf(StrSearchTablePos) != -1 && table.RowsCount > 1 && table.ColumnsCount == 6)
                         {
                             foundTable = true;
-                            double sumWeight = 0;
+                            double[] sumWeight = new double[pos.Mark.Count];
                             for (int indexrow = 0; table.RowsCount <= pos.Mark.Count + 3; indexrow++)
                             {
                                 table.AddRow(indexrow + 3, true);
@@ -271,14 +271,17 @@ namespace PositionApplicability.ViewModels
                                 ((IText)table.Cell[markIndex + 3, 4].Text).Str = pos.Mark[markIndex][4];
                                 try
                                 {
-                                    sumWeight += double.Parse(pos.Mark[markIndex][4]);
+                                    sumWeight[markIndex] = double.Parse(pos.Mark[markIndex][4]);
                                 }
                                 catch (Exception)
                                 {
                                     FillLog.Add($"{pos.Mark[markIndex][0]} - поз.{pos.Pos} - не корректная запись массы");
                                 }
                             }
-                            ((IText)table.Cell[table.RowsCount - 1, 4].Text).Str = sumWeight.ToString();
+                            if (Array.IndexOf(sumWeight, 0) == -1)
+                            {
+                                ((IText)table.Cell[table.RowsCount - 1, 4].Text).Str = sumWeight.Sum().ToString();
+                            }
                             drawingTable.Update();
                         }
                     }
