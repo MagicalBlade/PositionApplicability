@@ -9,11 +9,10 @@
       <Value Profile="(Default)" />
     </Setting>
     <Setting Name="StrSearchTableAssembly" Type="System.String" Scope="User">
-      <Value Profile="(Default)">Спецификация</Value>
+      <Value Profile="(Default)">Спецификация стали</Value>
     </Setting>
     <Setting Name="StrSearchTablePos" Type="System.String" Scope="User">
-      <Value Profile="(Default)">Кол-во
-</Value>
+      <Value Profile="(Default)">Ведомость отправочных марок</Value>
     </Setting>
   </Settings>
 </SettingsFile>

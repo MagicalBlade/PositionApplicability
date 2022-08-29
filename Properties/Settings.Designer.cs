@@ -49,7 +49,7 @@ namespace PositionApplicability.Properties {
         
         [global::System.Configuration.UserScopedSettingAttribute()]
         [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
-        [global::System.Configuration.DefaultSettingValueAttribute("Спецификация")]
+        [global::System.Configuration.DefaultSettingValueAttribute("Спецификация стали")]
         public string StrSearchTableAssembly {
             get {
                 return ((string)(this["StrSearchTableAssembly"]));
@@ -61,7 +61,7 @@ namespace PositionApplicability.Properties {
         
         [global::System.Configuration.UserScopedSettingAttribute()]
         [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
-        [global::System.Configuration.DefaultSettingValueAttribute("Кол-во\r\n")]
+        [global::System.Configuration.DefaultSettingValueAttribute("Ведомость отправочных марок")]
         public string StrSearchTablePos {
             get {
                 return ((string)(this["StrSearchTablePos"]));

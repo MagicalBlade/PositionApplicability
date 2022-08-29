@@ -126,7 +126,7 @@ namespace PositionApplicability.ViewModels
                                     int markIndex = PosList.FindIndex(x => x.Pos == ((IText)table.Cell[row, 0].Text).Str);
                                     if (markIndex != -1)
                                     {
-                                        PosList[markIndex].AddMark(NameMark,((IText)table.Cell[row, 1].Text).Str, ((IText)table.Cell[row, 2].Text).Str);
+                                        PosList[markIndex].AddMark(table, row, NameMark);
                                     }
                                     else
                                     {
@@ -254,18 +254,31 @@ namespace PositionApplicability.ViewModels
                     {
                         ITable table = (ITable)drawingTable;
                         IText text = (IText)table.Cell[0, 0].Text;
-                        if (text.Str.IndexOf(StrSearchTablePos) != -1 && table.RowsCount > 1 && table.ColumnsCount == 2)
+                        if (text.Str.IndexOf(StrSearchTablePos) != -1 && table.RowsCount > 1 && table.ColumnsCount == 6)
                         {
                             foundTable = true;
-                            for (int indexrow = 0; indexrow < pos.Mark.Count + 1 - table.RowsCount; indexrow++)
+                            double sumWeight = 0;
+                            for (int indexrow = 0; table.RowsCount <= pos.Mark.Count + 3; indexrow++)
                             {
-                                table.AddRow(indexrow + 1, true);
+                                table.AddRow(indexrow + 3, true);
                             }
                             for (int markIndex = 0; markIndex < pos.Mark.Count; markIndex++)
                             {
-                                ((IText)table.Cell[markIndex + 1, 0].Text).Str = pos.Mark[markIndex][1];
-                                ((IText)table.Cell[markIndex + 1, 1].Text).Str = pos.Mark[markIndex][0];
+                                ((IText)table.Cell[markIndex + 3, 0].Text).Str = pos.Mark[markIndex][0];
+                                ((IText)table.Cell[markIndex + 3, 1].Text).Str = pos.Mark[markIndex][1];
+                                ((IText)table.Cell[markIndex + 3, 2].Text).Str = pos.Mark[markIndex][2];
+                                ((IText)table.Cell[markIndex + 3, 3].Text).Str = pos.Mark[markIndex][3];
+                                ((IText)table.Cell[markIndex + 3, 4].Text).Str = pos.Mark[markIndex][4];
+                                try
+                                {
+                                    sumWeight += double.Parse(pos.Mark[markIndex][4]);
+                                }
+                                catch (Exception)
+                                {
+                                    FillLog.Add($"{pos.Mark[markIndex][0]} - поз.{pos.Pos} - не корректная запись массы");
+                                }
                             }
+                            ((IText)table.Cell[table.RowsCount - 1, 4].Text).Str = sumWeight.ToString();
                             drawingTable.Update();
                         }
                     }
@@ -294,6 +307,10 @@ namespace PositionApplicability.ViewModels
             WriteLog(FillLog, "FillLog");
             PBFill_Value = 100;
             Info = "Заполнение деталировки завершено";
+            if (FillLog.Count > 0)
+            {
+                Info += ". Есть ошибки, посмотрите журнал.";
+            }
         }
         
         #endregion
@@ -351,13 +368,13 @@ namespace PositionApplicability.ViewModels
                     {
                         
                         worksheet.Cell(i + incrementRow + 1, 1).Value = PosList[i].Pos;
-                        worksheet.Cell(i + incrementRow + 1, 2).Value = PosList[i].Mark[markIndex][1];
-                        worksheet.Cell(i + incrementRow + 1, 3).Value = PosList[i].Mark[markIndex][2];
+                        worksheet.Cell(i + incrementRow + 1, 2).Value = PosList[i].Mark[markIndex][2];
+                        worksheet.Cell(i + incrementRow + 1, 3).Value = PosList[i].Mark[markIndex][3];
                         worksheet.Cell(i + incrementRow + 1, 4).Value = PosList[i].Thickness;
                         worksheet.Cell(i + incrementRow + 1, 5).Value = PosList[i].Width;
                         worksheet.Cell(i + incrementRow + 1, 6).Value = PosList[i].Leigth;
-                        worksheet.Cell(i + incrementRow + 1, 7).Value = PosList[i].Weight;
-                        worksheet.Cell(i + incrementRow + 1, 8).Value = PosList[i].TotalMass;
+                        worksheet.Cell(i + incrementRow + 1, 7).Value = PosList[i].Mark[markIndex][1];
+                        worksheet.Cell(i + incrementRow + 1, 8).Value = PosList[i].Mark[markIndex][4];
                         worksheet.Cell(i + incrementRow + 1, 9).Value = PosList[i].Steel;
                         worksheet.Cell(i + incrementRow + 1, 10).Value = PosList[i].List;
                         worksheet.Cell(i + incrementRow + 1, 11).Value = PosList[i].Mark[markIndex][0];

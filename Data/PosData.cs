@@ -43,8 +43,8 @@ namespace PositionApplicability.Data
         /// <summary>
         /// Масса позиции
         /// </summary>
-        public string? Weight { get => _weight; set => _weight = value; }
-        private string? _weight;
+        public double Weight { get => _weight; set => _weight = value; }
+        private double _weight;
         /// <summary>
         /// Общая масса позиции
         /// </summary>
@@ -63,25 +63,20 @@ namespace PositionApplicability.Data
             Thickness= ((IText)table.Cell[row, 3].Text).Str;
             Width = ((IText)table.Cell[row, 4].Text).Str;
             Leigth = ((IText)table.Cell[row, 5].Text).Str;
-            Weight = ((IText)table.Cell[row, 6].Text).Str;
-            TotalMass = ((IText)table.Cell[row, 7].Text).Str;
             Steel = ((IText)table.Cell[row, 8].Text).Str;
             List = ((IText)table.Cell[row, 9].Text).Str;
 
-            Mark.Add(new string[3] 
-            {
-                nameMark,
-                ((IText)table.Cell[row, 1].Text).Str,
-                ((IText)table.Cell[row, 2].Text).Str
-            });
+            this.AddMark(table, row, nameMark);
         }
-        public bool AddMark(string nameMark, string quantityT,string quantityN)
+        public bool AddMark(ITable table, int row, string nameMark)
         {
-            Mark.Add(new string[3]
+            Mark.Add(new string[5]
             {
                 nameMark,
-                quantityT,
-                quantityN
+                ((IText)table.Cell[row, 6].Text).Str, //Масса одной позиции
+                ((IText)table.Cell[row, 1].Text).Str, //Количество таковских позиций
+                ((IText)table.Cell[row, 2].Text).Str, //Количество наоборотовских позиций
+                ((IText)table.Cell[row, 7].Text).Str //Общая масса
             });
             return true;
         }
