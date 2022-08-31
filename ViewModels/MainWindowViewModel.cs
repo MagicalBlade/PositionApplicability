@@ -243,8 +243,109 @@ namespace PositionApplicability.ViewModels
                     FillLog.Add($"поз. {pos.Pos} - не удалось открыть чертеж");
                     continue;
                 }
+                #region Вставка таблицы "Ведомость отправочных марок" в чертеж деталировки
+                double xSetPlacementTable = 0;
+                double ySetPlacementTable = 0;
+                ILayoutSheets layoutSheets = kompasDocuments2D.LayoutSheets;
+                ILayoutSheet layoutSheet = layoutSheets.ItemByNumber[1];
+                ISheetFormat sheetFormat = layoutSheet.Format;
+                switch (sheetFormat.Format)
+                {
+                    case Kompas6Constants.ksDocumentFormatEnum.ksFormatA0:
+                        if (sheetFormat.VerticalOrientation)
+                        {
+                            xSetPlacementTable = 836;
+                            ySetPlacementTable = 1184;
+                        }
+                        else
+                        {
+                            xSetPlacementTable = 1184;
+                            ySetPlacementTable = 836;
+                        }
+                        break;
+                    case Kompas6Constants.ksDocumentFormatEnum.ksFormatA1:
+                        if (sheetFormat.VerticalOrientation)
+                        {
+                            xSetPlacementTable = 589;
+                            ySetPlacementTable = 836;
+                        }
+                        else
+                        {
+                            xSetPlacementTable = 836;
+                            ySetPlacementTable = 589;
+                        }
+                        break;
+                    case Kompas6Constants.ksDocumentFormatEnum.ksFormatA2:
+                        if (sheetFormat.VerticalOrientation)
+                        {
+                            xSetPlacementTable = 415;
+                            ySetPlacementTable = 589;
+                        }
+                        else
+                        {
+                            xSetPlacementTable = 589;
+                            ySetPlacementTable = 415;
+                        }
+                        break;
+                    case Kompas6Constants.ksDocumentFormatEnum.ksFormatA3:
+                        if (sheetFormat.VerticalOrientation)
+                        {
+                            xSetPlacementTable = 292;
+                            ySetPlacementTable = 415;
+                        }
+                        else
+                        {
+                            xSetPlacementTable = 415;
+                            ySetPlacementTable = 292;
+                        }
+                        break;
+                    case Kompas6Constants.ksDocumentFormatEnum.ksFormatA4:
+                        if (sheetFormat.VerticalOrientation)
+                        {
+                            xSetPlacementTable = 205;
+                            ySetPlacementTable = 292;
+                        }
+                        else
+                        {
+                            xSetPlacementTable = 292;
+                            ySetPlacementTable = 205;
+                        }
+                        break;
+                    case Kompas6Constants.ksDocumentFormatEnum.ksFormatA5:
+                        if (sheetFormat.VerticalOrientation)
+                        {
+                            xSetPlacementTable = 143.5;
+                            ySetPlacementTable = 205;
+                        }
+                        else
+                        {
+                            xSetPlacementTable = 205;
+                            ySetPlacementTable = 143;
+                        }
+                        break;
+                    case Kompas6Constants.ksDocumentFormatEnum.ksFormatUser:
+                        xSetPlacementTable = sheetFormat.FormatWidth - 5;
+                        ySetPlacementTable = sheetFormat.FormatHeight - 5;
+                        break;
+                    default:
+                        break;
+                }
                 IViewsAndLayersManager viewsAndLayersManager = kompasDocuments2D.ViewsAndLayersManager;
                 IViews views = viewsAndLayersManager.Views;
+                IView view = views.View["Системный вид"];
+                IDrawingContainer drawingContainer = (IDrawingContainer)view;
+                IInsertionsManager insertionsManager = (IInsertionsManager)kompasDocuments2D;
+                InsertionDefinition insertionDefinition = insertionsManager.AddDefinition(
+                    Kompas6Constants.ksInsertionTypeEnum.ksTUnknown, "", $"{Directory.GetCurrentDirectory()}\\Resources\\Ведомость отправочных марок.frw");
+                IInsertionObjects insertionObjects = drawingContainer.InsertionObjects;
+                IInsertionFragment insertionFragment = (IInsertionFragment)insertionObjects.Add(insertionDefinition);
+                insertionFragment.SetPlacement(xSetPlacementTable, ySetPlacementTable, 0, false);
+                insertionFragment.Update(); 
+                #endregion
+
+                #region Старое. Запись в таблицу
+
+                /*
                 bool foundTable = false;
                 foreach (IView view in views)
                 {
@@ -291,6 +392,9 @@ namespace PositionApplicability.ViewModels
                 {
                     FillLog.Add($"{kompasDocuments2D.Name} - таблица не соответствует формату или не найдена");
                 }
+                */
+
+                #endregion
                 kompasDocuments2D.Save();
                 if (kompasDocuments2D.Changed)
                 {
