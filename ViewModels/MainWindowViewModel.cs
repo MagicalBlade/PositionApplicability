@@ -340,7 +340,7 @@ namespace PositionApplicability.ViewModels
                 IInsertionObjects insertionObjects = drawingContainer.InsertionObjects;
                 IInsertionFragment insertionFragment = (IInsertionFragment)insertionObjects.Add(insertionDefinition);
                 insertionFragment.SetPlacement(xSetPlacementTable, ySetPlacementTable, 0, false);
-                insertionFragment.Update(); 
+                insertionFragment.Update();
                 #endregion
 
                 #region Старое. Запись в таблицу
