@@ -58,17 +58,5 @@ namespace PositionApplicability.Properties {
                 this["StrSearchTableAssembly"] = value;
             }
         }
-        
-        [global::System.Configuration.UserScopedSettingAttribute()]
-        [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
-        [global::System.Configuration.DefaultSettingValueAttribute("Ведомость отправочных марок")]
-        public string StrSearchTablePos {
-            get {
-                return ((string)(this["StrSearchTablePos"]));
-            }
-            set {
-                this["StrSearchTablePos"] = value;
-            }
-        }
     }
 }

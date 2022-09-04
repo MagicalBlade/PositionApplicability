@@ -11,8 +11,5 @@
     <Setting Name="StrSearchTableAssembly" Type="System.String" Scope="User">
       <Value Profile="(Default)">Спецификация стали</Value>
     </Setting>
-    <Setting Name="StrSearchTablePos" Type="System.String" Scope="User">
-      <Value Profile="(Default)">Ведомость отправочных марок</Value>
-    </Setting>
   </Settings>
 </SettingsFile>

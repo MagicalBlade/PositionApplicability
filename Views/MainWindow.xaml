@@ -41,10 +41,7 @@
                 <Button Content="Указать путь к деталям:" HorizontalAlignment="Center" Padding="3" Margin="3"  Command="{Binding OpenFolderDialogPosCommand}"/>
                 <TextBox Height="25" Padding="3" Margin="3" Text="{Binding PathFolderPos}"/>
             </DockPanel>
-            <DockPanel>
-                <Label Content="Текст для поиска таблицы применяемости:" Padding="3" Margin="3"/>
-                <TextBox ToolTip="Укажите характерные слова, по которым можно будет найти таблицу применяемости в деталировке" Height="25" Padding="3" Margin="3" Text="{Binding StrSearchTablePos}"/>
-            </DockPanel>
+            <DockPanel/>
             <ProgressBar Height="25" Value = "{Binding PBFill_Value}"/>
             <StackPanel Orientation="Horizontal" HorizontalAlignment="Center">
                 <Button Content="Заполнить деталировку" HorizontalAlignment="Center" Padding="3" Margin="3"  Command="{Binding FillPosCommand}"/>   

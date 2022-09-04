@@ -25,8 +25,6 @@ namespace PositionApplicability.ViewModels
         [ObservableProperty]
         private string _strSearchTableAssembly = Properties.Settings.Default.StrSearchTableAssembly;
         [ObservableProperty]
-        private string _strSearchTablePos = Properties.Settings.Default.StrSearchTablePos;
-        [ObservableProperty]
         private string? _info;
         /// <summary>
         /// ProgressBar извлечения позиций
@@ -192,11 +190,6 @@ namespace PositionApplicability.ViewModels
                 Info = "Не верный путь к деталям";
                 return;
             }
-            if (StrSearchTablePos == "")
-            {
-                Info = "Не указан текст для поиска таблицы применяемости";
-                return;
-            }
 
             await Task.Run(() => FillPosAsync(token));
         }
@@ -333,68 +326,45 @@ namespace PositionApplicability.ViewModels
                 IViewsAndLayersManager viewsAndLayersManager = kompasDocuments2D.ViewsAndLayersManager;
                 IViews views = viewsAndLayersManager.Views;
                 IView view = views.View["Системный вид"];
-                IDrawingContainer drawingContainer = (IDrawingContainer)view;
-                IInsertionsManager insertionsManager = (IInsertionsManager)kompasDocuments2D;
-                InsertionDefinition insertionDefinition = insertionsManager.AddDefinition(
-                    Kompas6Constants.ksInsertionTypeEnum.ksTUnknown, "", $"{Directory.GetCurrentDirectory()}\\Resources\\Ведомость отправочных марок.frw");
-                IInsertionObjects insertionObjects = drawingContainer.InsertionObjects;
-                IInsertionFragment insertionFragment = (IInsertionFragment)insertionObjects.Add(insertionDefinition);
-                insertionFragment.SetPlacement(xSetPlacementTable, ySetPlacementTable, 0, false);
-                insertionFragment.Update();
-                #endregion
-
-                #region Старое. Запись в таблицу
-
-                /*
-                bool foundTable = false;
-                foreach (IView view in views)
+                IKompasDocument2D1 kompasDocument2D1 = (IKompasDocument2D1)kompasDocuments2D;
+                IDrawingGroups drawingGroups = kompasDocument2D1.DrawingGroups;
+                IDrawingGroup drawingGroup = drawingGroups.Add(true, "");
+                drawingGroup.ReadFragment(
+                    $"{Directory.GetCurrentDirectory()}\\Resources\\Ведомость отправочных марок.frw",
+                    true, 0, 0, 1, 0, false);
+                ksDocument2D ksDocument2D = kompas.TransferInterface(kompasDocuments2D,1 ,0);
+                ksDocument2D.ksMoveObj(drawingGroup.Reference, xSetPlacementTable, ySetPlacementTable);
+                IDrawingTable drawingTable = drawingGroup.Objects[0]; //Таблица
+                ITable table = (ITable)drawingTable;
+                double[] sumWeight = new double[pos.Mark.Count];
+                for (int indexrow = 0; table.RowsCount <= pos.Mark.Count + 3; indexrow++)
                 {
-                    ISymbols2DContainer symbols2DContainer = (ISymbols2DContainer)view;
-                    IDrawingTables drawingTables = symbols2DContainer.DrawingTables;
-                    foreach (IDrawingTable drawingTable in drawingTables)
+                    table.AddRow(indexrow + 3, true);
+                }
+                for (int markIndex = 0; markIndex < pos.Mark.Count; markIndex++)
+                {
+                    ((IText)table.Cell[markIndex + 3, 0].Text).Str = pos.Mark[markIndex][0];
+                    ((IText)table.Cell[markIndex + 3, 1].Text).Str = pos.Mark[markIndex][1];
+                    ((IText)table.Cell[markIndex + 3, 2].Text).Str = pos.Mark[markIndex][2];
+                    ((IText)table.Cell[markIndex + 3, 3].Text).Str = pos.Mark[markIndex][3];
+                    ((IText)table.Cell[markIndex + 3, 4].Text).Str = pos.Mark[markIndex][4];
+                    try
                     {
-                        ITable table = (ITable)drawingTable;
-                        IText text = (IText)table.Cell[0, 0].Text;
-                        if (text.Str.IndexOf(StrSearchTablePos) != -1 && table.RowsCount > 1 && table.ColumnsCount == 6)
-                        {
-                            foundTable = true;
-                            double[] sumWeight = new double[pos.Mark.Count];
-                            for (int indexrow = 0; table.RowsCount <= pos.Mark.Count + 3; indexrow++)
-                            {
-                                table.AddRow(indexrow + 3, true);
-                            }
-                            for (int markIndex = 0; markIndex < pos.Mark.Count; markIndex++)
-                            {
-                                ((IText)table.Cell[markIndex + 3, 0].Text).Str = pos.Mark[markIndex][0];
-                                ((IText)table.Cell[markIndex + 3, 1].Text).Str = pos.Mark[markIndex][1];
-                                ((IText)table.Cell[markIndex + 3, 2].Text).Str = pos.Mark[markIndex][2];
-                                ((IText)table.Cell[markIndex + 3, 3].Text).Str = pos.Mark[markIndex][3];
-                                ((IText)table.Cell[markIndex + 3, 4].Text).Str = pos.Mark[markIndex][4];
-                                try
-                                {
-                                    sumWeight[markIndex] = double.Parse(pos.Mark[markIndex][4]);
-                                }
-                                catch (Exception)
-                                {
-                                    FillLog.Add($"{pos.Mark[markIndex][0]} - поз.{pos.Pos} - не корректная запись массы");
-                                }
-                            }
-                            if (Array.IndexOf(sumWeight, 0) == -1)
-                            {
-                                ((IText)table.Cell[table.RowsCount - 1, 4].Text).Str = sumWeight.Sum().ToString();
-                            }
-                            drawingTable.Update();
-                        }
+                        sumWeight[markIndex] = double.Parse(pos.Mark[markIndex][4]);
+                    }
+                    catch (Exception)
+                    {
+                        FillLog.Add($"{pos.Mark[markIndex][0]} - поз.{pos.Pos} - не корректная запись массы");
                     }
                 }
-
-                if (!foundTable)
+                if (Array.IndexOf(sumWeight, 0) == -1)
                 {
-                    FillLog.Add($"{kompasDocuments2D.Name} - таблица не соответствует формату или не найдена");
+                    ((IText)table.Cell[table.RowsCount - 1, 4].Text).Str = sumWeight.Sum().ToString();
                 }
-                */
-
+                drawingTable.Update();
+                drawingGroup.Store();
                 #endregion
+
                 kompasDocuments2D.Save();
                 if (kompasDocuments2D.Changed)
                 {
@@ -514,7 +484,6 @@ namespace PositionApplicability.ViewModels
             Properties.Settings.Default.PathFolderAssembly = PathFolderAssembly;
             Properties.Settings.Default.PathFolderPos = PathFolderPos;
             Properties.Settings.Default.StrSearchTableAssembly = StrSearchTableAssembly;
-            Properties.Settings.Default.StrSearchTablePos = StrSearchTablePos;
             Properties.Settings.Default.Save();
         }
 
