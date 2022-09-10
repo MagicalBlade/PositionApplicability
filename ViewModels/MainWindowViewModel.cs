@@ -337,10 +337,12 @@ namespace PositionApplicability.ViewModels
                 IDrawingTable drawingTable = drawingGroup.Objects[0]; //Таблица
                 ITable table = (ITable)drawingTable;
                 double[] sumWeight = new double[pos.Mark.Count];
+                //Создание строк таблицы
                 for (int indexrow = 0; table.RowsCount <= pos.Mark.Count + 3; indexrow++)
                 {
                     table.AddRow(indexrow + 3, true);
                 }
+                //Заполнение строк таблицы
                 for (int markIndex = 0; markIndex < pos.Mark.Count; markIndex++)
                 {
                     ((IText)table.Cell[markIndex + 3, 0].Text).Str = pos.Mark[markIndex][0];
@@ -357,6 +359,7 @@ namespace PositionApplicability.ViewModels
                         FillLog.Add($"{pos.Mark[markIndex][0]} - поз.{pos.Pos} - не корректная запись массы");
                     }
                 }
+                //Если вся масса корректно преобразована в числа, то суммируем
                 if (Array.IndexOf(sumWeight, 0) == -1)
                 {
                     ((IText)table.Cell[table.RowsCount - 1, 4].Text).Str = sumWeight.Sum().ToString();
@@ -389,8 +392,8 @@ namespace PositionApplicability.ViewModels
                 Info += ". Есть ошибки, посмотрите журнал.";
             }
         }
-        
         #endregion
+
         [RelayCommand]
         private void SaveExcel()
         {
@@ -399,8 +402,9 @@ namespace PositionApplicability.ViewModels
                 Info = "Вначале извлеките позиции";
                 return;
             }
-            PosList.Sort(ComparePosData);
+            //PosList.Sort(ComparePosData);
             //Сортировка списака по номеру позиции
+            /*
             static int ComparePosData(PosData x, PosData y)
             {
                 if (x.Pos == null || x.Pos == "")
@@ -433,10 +437,27 @@ namespace PositionApplicability.ViewModels
                     return -1;
                 }
             }
-
+            */
             XLWorkbook workbook = new();
             IXLWorksheet worksheet = workbook.Worksheets.Add("Позиции");
-            int incrementRow = 0;
+            int incrementRow = 3; //Начальная строка
+            #region Формирование шапки листа
+            worksheet.Cell(1, 1).Value = "Поз.";
+            worksheet.Cell(1, 2).Value = "Кол-во";
+            worksheet.Cell(1, 4).Value = "Сечение, мм";
+            worksheet.Cell(1, 7).Value = "Масса, кг";
+            worksheet.Cell(1, 9).Value = "Материал";
+            worksheet.Cell(1, 10).Value = "Примечание";
+            worksheet.Cell(1, 11).Value = "Марка";
+            worksheet.Cell(2, 2).Value = "т";
+            worksheet.Cell(2, 3).Value = "н";
+            worksheet.Cell(2, 4).Value = "толщина";
+            worksheet.Cell(2, 5).Value = "ширина";
+            worksheet.Cell(2, 6).Value = "длина";
+            worksheet.Cell(2, 7).Value = "шт.";
+            worksheet.Cell(2, 8).Value = "общ.";
+            #endregion
+
             if (worksheet != null)
             {
                 for (int i = 0; i < PosList.Count; i++)
@@ -444,25 +465,35 @@ namespace PositionApplicability.ViewModels
                     for (int markIndex = 0; markIndex < PosList[i].Mark.Count; markIndex++)
                     {
                         
-                        worksheet.Cell(i + incrementRow + 1, 1).Value = PosList[i].Pos;
-                        worksheet.Cell(i + incrementRow + 1, 2).Value = PosList[i].Mark[markIndex][2];
-                        worksheet.Cell(i + incrementRow + 1, 3).Value = PosList[i].Mark[markIndex][3];
-                        worksheet.Cell(i + incrementRow + 1, 4).Value = PosList[i].Thickness;
-                        worksheet.Cell(i + incrementRow + 1, 5).Value = PosList[i].Width;
-                        worksheet.Cell(i + incrementRow + 1, 6).Value = PosList[i].Leigth;
-                        worksheet.Cell(i + incrementRow + 1, 7).Value = PosList[i].Mark[markIndex][1];
-                        worksheet.Cell(i + incrementRow + 1, 8).Value = PosList[i].Mark[markIndex][4];
-                        worksheet.Cell(i + incrementRow + 1, 9).Value = PosList[i].Steel;
-                        worksheet.Cell(i + incrementRow + 1, 10).Value = PosList[i].List;
-                        worksheet.Cell(i + incrementRow + 1, 11).Value = PosList[i].Mark[markIndex][0];
+                        worksheet.Cell(i + incrementRow, 1).Value = PosList[i].Pos;
+                        worksheet.Cell(i + incrementRow, 2).Value = PosList[i].Mark[markIndex][2];
+                        worksheet.Cell(i + incrementRow, 3).Value = PosList[i].Mark[markIndex][3];
+                        worksheet.Cell(i + incrementRow, 4).Value = PosList[i].Thickness;
+                        worksheet.Cell(i + incrementRow, 5).Value = PosList[i].Width;
+                        worksheet.Cell(i + incrementRow, 6).Value = PosList[i].Leigth;
+                        worksheet.Cell(i + incrementRow, 7).Value = PosList[i].Mark[markIndex][1];
+                        worksheet.Cell(i + incrementRow, 8).Value = PosList[i].Mark[markIndex][4];
+                        worksheet.Cell(i + incrementRow, 9).Value = PosList[i].Steel;
+                        worksheet.Cell(i + incrementRow, 10).Value = PosList[i].List;
+                        worksheet.Cell(i + incrementRow, 11).Value = PosList[i].Mark[markIndex][0];
                         incrementRow++;
                     }
                     incrementRow--;
                 }
                 worksheet.DataType = XLDataType.Text;
                 //Ширина колонки по содержимому
-                worksheet.Columns(1, PosList.Count).AdjustToContents();
+                worksheet.Columns(1, PosList.Count).AdjustToContents(5.0, 100.0);
+                #region Объединение ячеек
+                worksheet.Range("B1:C1").Row(1).Merge();
+                worksheet.Range("D1:F1").Row(1).Merge();
+                worksheet.Range("G1:H1").Row(1).Merge();
+                worksheet.Range("A1:A2").Column(1).Merge();
+                worksheet.Range("I1:I2").Column(1).Merge();
+                worksheet.Range("J1:J2").Column(1).Merge();
+                worksheet.Range("K1:K2").Column(1).Merge(); 
+                #endregion
                 worksheet.Columns(1, PosList.Count).Style.Alignment.SetHorizontal(XLAlignmentHorizontalValues.Center);
+                worksheet.Columns(1, PosList.Count).Style.Alignment.SetVertical(XLAlignmentVerticalValues.Center);
             }
             
             try
