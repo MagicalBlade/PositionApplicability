@@ -18,6 +18,12 @@ namespace PositionApplicability.ViewModels
 {
     internal partial class MainWindowViewModel : ObservableObject
     {
+        #region Параметры окна
+        [ObservableProperty]
+        private double _heightWindow = Properties.Settings.Default.Height;
+        [ObservableProperty]
+        private double _widthWindow = Properties.Settings.Default.Width;
+        #endregion
         [ObservableProperty]
         private string _pathFolderAssembly = Properties.Settings.Default.PathFolderAssembly;
         [ObservableProperty]
@@ -208,6 +214,11 @@ namespace PositionApplicability.ViewModels
         private async Task FillPosAsync(CancellationToken token)
         {
             FillLog.Clear();
+            if (!File.Exists($"{Directory.GetCurrentDirectory()}\\Resources\\Ведомость отправочных марок.frw"))
+            {
+                Info = "Не найден файл 'Ведомость отправочных марок.frw' в папке Resources";
+                return;
+            }
             Info = "Началось заполнение деталировки";
             PBFill_Value = 1;
             SearchOption searchOptionFill;
@@ -356,6 +367,13 @@ namespace PositionApplicability.ViewModels
                 ksDocument2D.ksMoveObj(drawingGroup.Reference, xSetPlacementTable, ySetPlacementTable);
                 IDrawingTable drawingTable = drawingGroup.Objects[0]; //Таблица
                 ITable table = (ITable)drawingTable;
+                if (table.ColumnsCount != 6 || table.RowsCount < 5)
+                {
+                    kompas.Quit();
+                    PBFill_Value = 0;
+                    Info = "Не корректная таблица 'Ведомость отправочных марок.frw' в папке Resources";
+                    return;
+                }
                 double[] sumWeight = new double[pos.Mark.Count];
                 //Создание строк таблицы
                 for (int indexrow = 0; table.RowsCount <= pos.Mark.Count + 3; indexrow++)
@@ -532,6 +550,8 @@ namespace PositionApplicability.ViewModels
         [RelayCommand]
         private void Closing()
         {
+            Properties.Settings.Default.Height = HeightWindow;
+            Properties.Settings.Default.Width = WidthWindow;
             Properties.Settings.Default.PathFolderAssembly = PathFolderAssembly;
             Properties.Settings.Default.PathFolderPos = PathFolderPos;
             Properties.Settings.Default.StrSearchTableAssembly = StrSearchTableAssembly;

@@ -7,7 +7,8 @@
         xmlns:i="http://schemas.microsoft.com/xaml/behaviors"
         xmlns:local="clr-namespace:PositionApplicability" xmlns:viewmodels="clr-namespace:PositionApplicability.ViewModels"
         mc:Ignorable="d"
-        Title="Применяемость позиций" MinHeight="400" MinWidth="373" WindowStartupLocation="CenterScreen" WindowStyle="SingleBorderWindow" SizeToContent="WidthAndHeight">
+        Title="Применяемость позиций" MinHeight="400" MinWidth="373" Height="{Binding HeightWindow, Mode=TwoWay}" Width="{Binding WidthWindow, Mode=TwoWay}"
+        WindowStartupLocation="CenterScreen" WindowStyle="SingleBorderWindow">
     <Window.DataContext>
         <viewmodels:MainWindowViewModel/>
     </Window.DataContext>

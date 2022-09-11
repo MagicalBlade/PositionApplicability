@@ -17,5 +17,11 @@
     <Setting Name="IsAllDirectoryFill" Type="System.Boolean" Scope="User">
       <Value Profile="(Default)">False</Value>
     </Setting>
+    <Setting Name="Height" Type="System.Double" Scope="User">
+      <Value Profile="(Default)">400</Value>
+    </Setting>
+    <Setting Name="Width" Type="System.Double" Scope="User">
+      <Value Profile="(Default)">373</Value>
+    </Setting>
   </Settings>
 </SettingsFile>
