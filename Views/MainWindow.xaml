@@ -33,6 +33,7 @@
             </DockPanel>
             <ProgressBar Height="25" Value = "{Binding PBExtraction_Value}"/>
             <StackPanel Orientation="Horizontal" HorizontalAlignment="Center">
+                <CheckBox Content="В подпапках" IsChecked="{Binding IsAllDirectoryExtraction}" VerticalContentAlignment="Center" VerticalAlignment="Center" Padding="3" Margin="3"/>
                 <Button Content="Извлечение позиций" HorizontalAlignment="Center" Padding="3" Margin="3" Command="{Binding ExtractionPositionsCommand}"/>
                 <Button Content="Отмена" HorizontalAlignment="Center" Padding="3" Margin="3" Command="{Binding ExtractionPositionsCancelCommand}"/>
                 <Button Content="Журнал" HorizontalAlignment="Center" Padding="3" Margin="3" Command="{Binding OpenLogCommand}" CommandParameter="ExtractionLog"/>
@@ -44,6 +45,7 @@
             <DockPanel/>
             <ProgressBar Height="25" Value = "{Binding PBFill_Value}"/>
             <StackPanel Orientation="Horizontal" HorizontalAlignment="Center">
+                <CheckBox Content="В подпапках" IsChecked="{Binding IsAllDirectoryFill}" VerticalContentAlignment="Center" VerticalAlignment="Center" Padding="3" Margin="3"/>
                 <Button Content="Заполнить деталировку" HorizontalAlignment="Center" Padding="3" Margin="3"  Command="{Binding FillPosCommand}"/>   
                 <Button Content="Отмена" HorizontalAlignment="Center" Padding="3" Margin="3"  Command="{Binding FillPosCancelCommand}"/>
                 <Button Content="Журнал" HorizontalAlignment="Center" Padding="3" Margin="3" Command="{Binding OpenLogCommand}" CommandParameter="FillLog"/>

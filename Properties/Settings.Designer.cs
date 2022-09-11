@@ -58,5 +58,29 @@ namespace PositionApplicability.Properties {
                 this["StrSearchTableAssembly"] = value;
             }
         }
+        
+        [global::System.Configuration.UserScopedSettingAttribute()]
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
+        [global::System.Configuration.DefaultSettingValueAttribute("False")]
+        public bool IsAllDirectoryExtraction {
+            get {
+                return ((bool)(this["IsAllDirectoryExtraction"]));
+            }
+            set {
+                this["IsAllDirectoryExtraction"] = value;
+            }
+        }
+        
+        [global::System.Configuration.UserScopedSettingAttribute()]
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
+        [global::System.Configuration.DefaultSettingValueAttribute("False")]
+        public bool IsAllDirectoryFill {
+            get {
+                return ((bool)(this["IsAllDirectoryFill"]));
+            }
+            set {
+                this["IsAllDirectoryFill"] = value;
+            }
+        }
     }
 }

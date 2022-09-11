@@ -25,9 +25,13 @@ namespace PositionApplicability.ViewModels
         [ObservableProperty]
         private string _strSearchTableAssembly = Properties.Settings.Default.StrSearchTableAssembly;
         [ObservableProperty]
+        private bool _isAllDirectoryExtraction = Properties.Settings.Default.IsAllDirectoryExtraction;
+        [ObservableProperty]
+        private bool _isAllDirectoryFill = Properties.Settings.Default.IsAllDirectoryFill;
+        [ObservableProperty]
         private string? _info;
         /// <summary>
-        /// ProgressBar извлечения позиций
+        /// ProgressBar извлечение позиций
         /// </summary>
         [ObservableProperty]
         private double _pBExtraction_Value = 0;
@@ -69,7 +73,15 @@ namespace PositionApplicability.ViewModels
             ExtractionLog.Clear();
             Info = "Началось извлечение позиций";
             PBExtraction_Value = 1;
-            string[] assemblyFiles = Directory.GetFiles(PathFolderAssembly, "*.cdw", SearchOption.TopDirectoryOnly);
+            string[] assemblyFiles;
+            if (IsAllDirectoryExtraction)
+            {
+                assemblyFiles = Directory.GetFiles(PathFolderAssembly, "*.cdw", SearchOption.AllDirectories);
+            }
+            else
+            {
+                assemblyFiles = Directory.GetFiles(PathFolderAssembly, "*.cdw", SearchOption.TopDirectoryOnly);
+            }
             Type? kompasType = Type.GetTypeFromProgID("Kompas.Application.5", true);
             PBExtraction_Value = 10;
             if (kompasType == null) return;
@@ -198,7 +210,15 @@ namespace PositionApplicability.ViewModels
             FillLog.Clear();
             Info = "Началось заполнение деталировки";
             PBFill_Value = 1;
-            string[] posFiles = Directory.GetFiles(PathFolderPos, "*.cdw", SearchOption.TopDirectoryOnly);
+            SearchOption searchOptionFill;
+            if (IsAllDirectoryFill)
+            {
+                searchOptionFill = SearchOption.AllDirectories;
+            }
+            else
+            {
+                searchOptionFill = SearchOption.TopDirectoryOnly;
+            }
             Type? kompasType = Type.GetTypeFromProgID("Kompas.Application.5", true);
             if (kompasType == null) return;
             KompasObject? kompas = Activator.CreateInstance(kompasType) as KompasObject; //Запуск компаса
@@ -216,7 +236,7 @@ namespace PositionApplicability.ViewModels
             foreach (PosData pos in PosList)
             {
                 Regex re = new Regex($@"поз.*\D{pos.Pos}\D.*cdw", RegexOptions.IgnoreCase);
-                string[] path = Directory.GetFiles(PathFolderPos, $"*поз*{pos.Pos}*.cdw")
+                string[] path = Directory.GetFiles(PathFolderPos, $"*поз*{pos.Pos}*.cdw", searchOptionFill)
                     .Where(path => re.IsMatch(path))
                     .ToArray();
 
@@ -381,7 +401,7 @@ namespace PositionApplicability.ViewModels
                     Info = "Заполнение деталировки отменено";
                     return;
                 }
-                PBFill_Value += 90 / posFiles.Length;
+                PBFill_Value += 90 / PosList.Count;
             }
             kompas.Quit();
             WriteLog(FillLog, "FillLog");
@@ -404,7 +424,6 @@ namespace PositionApplicability.ViewModels
             }
             //PosList.Sort(ComparePosData);
             //Сортировка списака по номеру позиции
-            /*
             static int ComparePosData(PosData x, PosData y)
             {
                 if (x.Pos == null || x.Pos == "")
@@ -437,7 +456,8 @@ namespace PositionApplicability.ViewModels
                     return -1;
                 }
             }
-            */
+            
+
             XLWorkbook workbook = new();
             IXLWorksheet worksheet = workbook.Worksheets.Add("Позиции");
             int incrementRow = 3; //Начальная строка
@@ -515,6 +535,8 @@ namespace PositionApplicability.ViewModels
             Properties.Settings.Default.PathFolderAssembly = PathFolderAssembly;
             Properties.Settings.Default.PathFolderPos = PathFolderPos;
             Properties.Settings.Default.StrSearchTableAssembly = StrSearchTableAssembly;
+            Properties.Settings.Default.IsAllDirectoryExtraction = IsAllDirectoryExtraction;
+            Properties.Settings.Default.IsAllDirectoryFill = IsAllDirectoryFill;
             Properties.Settings.Default.Save();
         }
 
