@@ -480,20 +480,20 @@ namespace PositionApplicability.ViewModels
             IXLWorksheet worksheet = workbook.Worksheets.Add("Позиции");
             int incrementRow = 3; //Начальная строка
             #region Формирование шапки листа
-            worksheet.Cell(1, 1).Value = "Поз.";
-            worksheet.Cell(1, 2).Value = "Кол-во";
-            worksheet.Cell(1, 4).Value = "Сечение, мм";
-            worksheet.Cell(1, 7).Value = "Масса, кг";
-            worksheet.Cell(1, 9).Value = "Материал";
-            worksheet.Cell(1, 10).Value = "Примечание";
-            worksheet.Cell(1, 11).Value = "Марка";
-            worksheet.Cell(2, 2).Value = "т";
-            worksheet.Cell(2, 3).Value = "н";
-            worksheet.Cell(2, 4).Value = "толщина";
-            worksheet.Cell(2, 5).Value = "ширина";
-            worksheet.Cell(2, 6).Value = "длина";
-            worksheet.Cell(2, 7).Value = "шт.";
-            worksheet.Cell(2, 8).Value = "общ.";
+            worksheet.Cell(1, 1).SetValue("Поз.");
+            worksheet.Cell(1, 2).SetValue("Кол-во");
+            worksheet.Cell(1, 4).SetValue("Сечение, мм");
+            worksheet.Cell(1, 7).SetValue("Масса, кг");
+            worksheet.Cell(1, 9).SetValue("Материал");
+            worksheet.Cell(1, 10).SetValue("Примечание");
+            worksheet.Cell(1, 11).SetValue("Марка");
+            worksheet.Cell(2, 2).SetValue("т");
+            worksheet.Cell(2, 3).SetValue("н");
+            worksheet.Cell(2, 4).SetValue("толщина");
+            worksheet.Cell(2, 5).SetValue("ширина");
+            worksheet.Cell(2, 6).SetValue("длина");
+            worksheet.Cell(2, 7).SetValue("шт.");
+            worksheet.Cell(2, 8).SetValue("общ.");
             #endregion
 
             if (worksheet != null)
@@ -503,17 +503,17 @@ namespace PositionApplicability.ViewModels
                     for (int markIndex = 0; markIndex < PosList[i].Mark.Count; markIndex++)
                     {
                         
-                        worksheet.Cell(i + incrementRow, 1).Value = PosList[i].Pos;
-                        worksheet.Cell(i + incrementRow, 2).Value = PosList[i].Mark[markIndex][2];
-                        worksheet.Cell(i + incrementRow, 3).Value = PosList[i].Mark[markIndex][3];
-                        worksheet.Cell(i + incrementRow, 4).Value = PosList[i].Thickness;
-                        worksheet.Cell(i + incrementRow, 5).Value = PosList[i].Width;
-                        worksheet.Cell(i + incrementRow, 6).Value = PosList[i].Leigth;
-                        worksheet.Cell(i + incrementRow, 7).Value = PosList[i].Mark[markIndex][1];
-                        worksheet.Cell(i + incrementRow, 8).Value = PosList[i].Mark[markIndex][4];
-                        worksheet.Cell(i + incrementRow, 9).Value = PosList[i].Steel;
-                        worksheet.Cell(i + incrementRow, 10).Value = PosList[i].List;
-                        worksheet.Cell(i + incrementRow, 11).Value = PosList[i].Mark[markIndex][0];
+                        worksheet.Cell(i + incrementRow, 1).SetValue(PosList[i].Pos);
+                        worksheet.Cell(i + incrementRow, 2).SetValue(PosList[i].Mark[markIndex][2]);
+                        worksheet.Cell(i + incrementRow, 3).SetValue(PosList[i].Mark[markIndex][3]);
+                        worksheet.Cell(i + incrementRow, 4).SetValue(PosList[i].Thickness);
+                        worksheet.Cell(i + incrementRow, 5).SetValue(PosList[i].Width);
+                        worksheet.Cell(i + incrementRow, 6).SetValue(PosList[i].Leigth);
+                        worksheet.Cell(i + incrementRow, 7).SetValue(PosList[i].Mark[markIndex][1]);
+                        worksheet.Cell(i + incrementRow, 8).SetValue(PosList[i].Mark[markIndex][4]);
+                        worksheet.Cell(i + incrementRow, 9).SetValue(PosList[i].Steel);
+                        worksheet.Cell(i + incrementRow, 10).SetValue(PosList[i].List);
+                        worksheet.Cell(i + incrementRow, 11).SetValue(PosList[i].Mark[markIndex][0]);
                         incrementRow++;
                     }
                     incrementRow--;
