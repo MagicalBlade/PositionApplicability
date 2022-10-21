@@ -17,8 +17,8 @@ namespace PositionApplicability.Data
         /// <summary>
         /// Наименование марки
         /// </summary>
-        public List<string[]> Mark { get => _mark; set => _mark = value; }
-        private List<string[]> _mark = new();
+        public List<dynamic[]> Mark { get => _mark; set => _mark = value; }
+        private List<dynamic[]> _mark = new();
         /// <summary>
         /// Толщина детали
         /// </summary>
@@ -57,7 +57,7 @@ namespace PositionApplicability.Data
 
         private string? _list;
 
-        public PosData(ITable table, int row, string nameMark)
+        public PosData(ITable table, int row, string nameMark, int markcount)
         {
             Pos = ((IText)table.Cell[row, 0].Text).Str;
             Thickness= ((IText)table.Cell[row, 3].Text).Str;
@@ -65,18 +65,18 @@ namespace PositionApplicability.Data
             Leigth = ((IText)table.Cell[row, 5].Text).Str;
             Steel = ((IText)table.Cell[row, 8].Text).Str;
             List = ((IText)table.Cell[row, 9].Text).Str;
-
-            this.AddMark(table, row, nameMark);
+            this.AddMark(table, row, nameMark, markcount);
         }
-        public bool AddMark(ITable table, int row, string nameMark)
+        public bool AddMark(ITable table, int row, string nameMark, int markcount)
         {
-            Mark.Add(new string[5]
+            Mark.Add(new dynamic[6]
             {
                 nameMark,
                 ((IText)table.Cell[row, 6].Text).Str, //Масса одной позиции
                 ((IText)table.Cell[row, 1].Text).Str, //Количество таковских позиций
                 ((IText)table.Cell[row, 2].Text).Str, //Количество наоборотовских позиций
-                ((IText)table.Cell[row, 7].Text).Str //Общая масса
+                ((IText)table.Cell[row, 7].Text).Str, //Общая масса
+                markcount
             });
             return true;
         }

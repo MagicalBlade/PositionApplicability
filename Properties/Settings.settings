@@ -23,5 +23,8 @@
     <Setting Name="Width" Type="System.Double" Scope="User">
       <Value Profile="(Default)">373</Value>
     </Setting>
+    <Setting Name="StrSearchTableMark" Type="System.String" Scope="User">
+      <Value Profile="(Default)">Ведомость отправочных марок</Value>
+    </Setting>
   </Settings>
 </SettingsFile>

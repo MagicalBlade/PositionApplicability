@@ -106,5 +106,17 @@ namespace PositionApplicability.Properties {
                 this["Width"] = value;
             }
         }
+        
+        [global::System.Configuration.UserScopedSettingAttribute()]
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
+        [global::System.Configuration.DefaultSettingValueAttribute("Ведомость отправочных марок")]
+        public string StrSearchTableMark {
+            get {
+                return ((string)(this["StrSearchTableMark"]));
+            }
+            set {
+                this["StrSearchTableMark"] = value;
+            }
+        }
     }
 }

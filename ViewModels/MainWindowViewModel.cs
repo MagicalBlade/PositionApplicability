@@ -28,8 +28,12 @@ namespace PositionApplicability.ViewModels
         private string _pathFolderAssembly = Properties.Settings.Default.PathFolderAssembly;
         [ObservableProperty]
         private string _pathFolderPos = Properties.Settings.Default.PathFolderPos;
+        //Спецификация
         [ObservableProperty]
         private string _strSearchTableAssembly = Properties.Settings.Default.StrSearchTableAssembly;
+        //Ведомость отправочных марок
+        [ObservableProperty]
+        private string _strSearchTableMark = Properties.Settings.Default.StrSearchTableMark;
         [ObservableProperty]
         private bool _isAllDirectoryExtraction = Properties.Settings.Default.IsAllDirectoryExtraction;
         [ObservableProperty]
@@ -123,39 +127,74 @@ namespace PositionApplicability.ViewModels
                 #endregion
                 IViewsAndLayersManager viewsAndLayersManager = kompasDocuments2D.ViewsAndLayersManager;
                 IViews views = viewsAndLayersManager.Views;
-                bool foundTable = false;
+                bool foundTableAssemble = false;
+                bool foundTableMark = false;
                 foreach (IView view in views)
                 {
                     ISymbols2DContainer symbols2DContainer = (ISymbols2DContainer)view;
                     IDrawingTables drawingTables = symbols2DContainer.DrawingTables;
+                    //Ведоиость отправочных марок
+                    int markCountT = 0;
+                    int markCountN = 0;
                     foreach (ITable table in drawingTables)
                     {
                         IText text = (IText)table.Cell[0, 0].Text;
+                        if (text.Str.IndexOf(StrSearchTableMark) != -1 && table.RowsCount > 3 && table.ColumnsCount == 5)
+                        {
+                            if (((IText)table.Cell[3, 0].Text).Str != "" && (((IText)table.Cell[3, 1].Text).Str != "" || ((IText)table.Cell[3, 2].Text).Str != ""))
+                            {
+                                foundTableMark = true;
+                                try
+                                {
+                                    if (((IText)table.Cell[3, 1].Text).Str != "")
+                                    {
+                                        markCountT = int.Parse(((IText)table.Cell[3, 1].Text).Str);
+                                    }
+                                    if (((IText)table.Cell[3, 2].Text).Str != "")
+                                    {
+                                        markCountN = int.Parse(((IText)table.Cell[3, 2].Text).Str);
+                                    }
+                                }
+                                catch (Exception)
+                                {
+                                    ExtractionLog.Add($"{NameMark} - не корректная запись количества марки");
+                                }
+                            }
+                        }
+                    }
+                    foreach (ITable table in drawingTables)
+                    {
+                        IText text = (IText)table.Cell[0, 0].Text;
+                        //Спецификация
                         if (text.Str.IndexOf(StrSearchTableAssembly) != -1 && table.RowsCount > 2 && table.ColumnsCount == 10)
                         {
-                            foundTable = true;
+                            foundTableAssemble = true;
                             for (int row = 3; row < table.RowsCount; row++)
                             {
                                 if (((IText)table.Cell[row, 0].Text).Str != "" && (((IText)table.Cell[row, 1].Text).Str != "" || ((IText)table.Cell[row, 2].Text).Str != ""))
                                 {
-                                    foundTable = true;
+                                    foundTableAssemble = true;
                                     int markIndex = PosList.FindIndex(x => x.Pos == ((IText)table.Cell[row, 0].Text).Str);
                                     if (markIndex != -1)
                                     {
-                                        PosList[markIndex].AddMark(table, row, NameMark);
+                                        PosList[markIndex].AddMark(table, row, NameMark, markCountN + markCountT);
                                     }
                                     else
                                     {
-                                        PosList.Add(new PosData(table, row, NameMark));
+                                        PosList.Add(new PosData(table, row, NameMark, markCountN + markCountT));
                                     }
                                 }
                             }
                         }
                     }
                 }
-                if (!foundTable)
+                if (!foundTableAssemble)
                 {
-                    ExtractionLog.Add($"{kompasDocuments2D.Name} - таблица не соответствует формату или не найдена");
+                    ExtractionLog.Add($"{kompasDocuments2D.Name} - спецификация не соответствует формату или не найдена");
+                }
+                if (!foundTableMark)
+                {
+                    ExtractionLog.Add($"{kompasDocuments2D.Name} - ведомость отправочных марок не соответствует формату или не найдена");
                 }
                 kompasDocuments2D.Close(Kompas6Constants.DocumentCloseOptions.kdDoNotSaveChanges);
                 if (token.IsCancellationRequested)
@@ -514,6 +553,7 @@ namespace PositionApplicability.ViewModels
                         worksheet.Cell(i + incrementRow, 9).SetValue(PosList[i].Steel);
                         worksheet.Cell(i + incrementRow, 10).SetValue(PosList[i].List);
                         worksheet.Cell(i + incrementRow, 11).SetValue(PosList[i].Mark[markIndex][0]);
+                        worksheet.Cell(i + incrementRow, 12).SetValue(PosList[i].Mark[markIndex][5]);
                         incrementRow++;
                     }
                     incrementRow--;
@@ -557,6 +597,7 @@ namespace PositionApplicability.ViewModels
             Properties.Settings.Default.StrSearchTableAssembly = StrSearchTableAssembly;
             Properties.Settings.Default.IsAllDirectoryExtraction = IsAllDirectoryExtraction;
             Properties.Settings.Default.IsAllDirectoryFill = IsAllDirectoryFill;
+            Properties.Settings.Default.StrSearchTableMark = StrSearchTableMark;
             Properties.Settings.Default.Save();
         }
 
