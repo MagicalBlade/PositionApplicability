@@ -76,7 +76,7 @@ namespace PositionApplicability.Data
                 ((IText)table.Cell[row, 1].Text).Str, //Количество таковских позиций
                 ((IText)table.Cell[row, 2].Text).Str, //Количество наоборотовских позиций
                 ((IText)table.Cell[row, 7].Text).Str, //Общая масса
-                markcount
+                markcount // Количество марок
             });
             return true;
         }

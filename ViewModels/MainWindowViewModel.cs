@@ -129,13 +129,15 @@ namespace PositionApplicability.ViewModels
                 IViews views = viewsAndLayersManager.Views;
                 bool foundTableAssemble = false;
                 bool foundTableMark = false;
+                ITable? specTable = null;
+                int markCountT = 0;
+                int markCountN = 0;
                 foreach (IView view in views)
                 {
                     ISymbols2DContainer symbols2DContainer = (ISymbols2DContainer)view;
                     IDrawingTables drawingTables = symbols2DContainer.DrawingTables;
                     //Ведоиость отправочных марок
-                    int markCountT = 0;
-                    int markCountN = 0;
+                   
                     foreach (ITable table in drawingTables)
                     {
                         IText text = (IText)table.Cell[0, 0].Text;
@@ -169,21 +171,25 @@ namespace PositionApplicability.ViewModels
                         if (text.Str.IndexOf(StrSearchTableAssembly) != -1 && table.RowsCount > 2 && table.ColumnsCount == 10)
                         {
                             foundTableAssemble = true;
-                            for (int row = 3; row < table.RowsCount; row++)
+                            specTable = table;
+                        }
+                    }
+                }
+                if (specTable != null)
+                {
+                    for (int row = 3; row < specTable.RowsCount; row++)
+                    {
+                        if (((IText)specTable.Cell[row, 0].Text).Str != "" && (((IText)specTable.Cell[row, 1].Text).Str != "" || ((IText)specTable.Cell[row, 2].Text).Str != ""))
+                        {
+                            foundTableAssemble = true;
+                            int markIndex = PosList.FindIndex(x => x.Pos == ((IText)specTable.Cell[row, 0].Text).Str);
+                            if (markIndex != -1)
                             {
-                                if (((IText)table.Cell[row, 0].Text).Str != "" && (((IText)table.Cell[row, 1].Text).Str != "" || ((IText)table.Cell[row, 2].Text).Str != ""))
-                                {
-                                    foundTableAssemble = true;
-                                    int markIndex = PosList.FindIndex(x => x.Pos == ((IText)table.Cell[row, 0].Text).Str);
-                                    if (markIndex != -1)
-                                    {
-                                        PosList[markIndex].AddMark(table, row, NameMark, markCountN + markCountT);
-                                    }
-                                    else
-                                    {
-                                        PosList.Add(new PosData(table, row, NameMark, markCountN + markCountT));
-                                    }
-                                }
+                                PosList[markIndex].AddMark(specTable, row, NameMark, markCountN + markCountT);
+                            }
+                            else
+                            {
+                                PosList.Add(new PosData(specTable, row, NameMark, markCountN + markCountT));
                             }
                         }
                     }
@@ -396,6 +402,8 @@ namespace PositionApplicability.ViewModels
                 IViewsAndLayersManager viewsAndLayersManager = kompasDocuments2D.ViewsAndLayersManager;
                 IViews views = viewsAndLayersManager.Views;
                 IView view = views.View["Системный вид"];
+                view.Current = true;
+                view.Update();
                 IKompasDocument2D1 kompasDocument2D1 = (IKompasDocument2D1)kompasDocuments2D;
                 IDrawingGroups drawingGroups = kompasDocument2D1.DrawingGroups;
                 IDrawingGroup drawingGroup = drawingGroups.Add(true, "");
@@ -424,8 +432,21 @@ namespace PositionApplicability.ViewModels
                 {
                     ((IText)table.Cell[markIndex + 3, 0].Text).Str = pos.Mark[markIndex][0];
                     ((IText)table.Cell[markIndex + 3, 1].Text).Str = pos.Mark[markIndex][1];
-                    ((IText)table.Cell[markIndex + 3, 2].Text).Str = pos.Mark[markIndex][2];
-                    ((IText)table.Cell[markIndex + 3, 3].Text).Str = pos.Mark[markIndex][3];
+                    try
+                    {
+                        if (pos.Mark[markIndex][2] != "")
+                        {
+                            ((IText)table.Cell[markIndex + 3, 2].Text).Str = $"{int.Parse(pos.Mark[markIndex][2]) * pos.Mark[markIndex][5]}"; //Количество таковских
+                        }
+                        if (pos.Mark[markIndex][3] != "")
+                        {
+                            ((IText)table.Cell[markIndex + 3, 3].Text).Str = $"{int.Parse(pos.Mark[markIndex][3]) * pos.Mark[markIndex][5]}"; //Количество наоборотовских
+                        }
+                    }
+                    catch (Exception e)
+                    {
+                        MessageBox.Show($"{e}");;
+                    }
                     ((IText)table.Cell[markIndex + 3, 4].Text).Str = pos.Mark[markIndex][4];
                     try
                     {
@@ -526,6 +547,7 @@ namespace PositionApplicability.ViewModels
             worksheet.Cell(1, 9).SetValue("Материал");
             worksheet.Cell(1, 10).SetValue("Примечание");
             worksheet.Cell(1, 11).SetValue("Марка");
+            worksheet.Cell(1, 12).SetValue("Кол-во");
             worksheet.Cell(2, 2).SetValue("т");
             worksheet.Cell(2, 3).SetValue("н");
             worksheet.Cell(2, 4).SetValue("толщина");
@@ -533,6 +555,7 @@ namespace PositionApplicability.ViewModels
             worksheet.Cell(2, 6).SetValue("длина");
             worksheet.Cell(2, 7).SetValue("шт.");
             worksheet.Cell(2, 8).SetValue("общ.");
+            worksheet.Cell(2, 12).SetValue("Марок");
             #endregion
 
             if (worksheet != null)
