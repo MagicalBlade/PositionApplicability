@@ -80,6 +80,7 @@ namespace PositionApplicability.ViewModels
         }
         private async Task ExtractionPositionsAsync(CancellationToken token)
         {
+            PosList.Clear();
             ExtractionLog.Clear();
             Info = "Началось извлечение позиций";
             PBExtraction_Value = 1;
@@ -181,15 +182,54 @@ namespace PositionApplicability.ViewModels
                     {
                         if (((IText)specTable.Cell[row, 0].Text).Str != "" && (((IText)specTable.Cell[row, 1].Text).Str != "" || ((IText)specTable.Cell[row, 2].Text).Str != ""))
                         {
+                            double weight = 0;
+                            int qantityT = 0;
+                            int qantityN = 0;
+                            double totalWeight = 0;
+                            try
+                            {
+                                weight = double.Parse(((IText)specTable.Cell[row, 6].Text).Str); //Масса одной позиции
+                            }
+                            catch (Exception)
+                            {
+                                FillLog.Add($"{NameMark} - поз.{((IText)specTable.Cell[row, 0].Text).Str} - не корректная запись массы");
+                            }
+                            try
+                            {
+                                qantityT = int.Parse(((IText)specTable.Cell[row, 1].Text).Str); //Количество таковских позиций
+                                
+                            }
+                            catch (Exception)
+                            {
+                                FillLog.Add($"{NameMark} - поз.{((IText)specTable.Cell[row, 0].Text).Str} - не корректная запись таковских позиций");
+                            }
+                            try
+                            {
+                                qantityN = int.Parse(((IText)specTable.Cell[row, 2].Text).Str); //Количество наоборотовских позиций
+
+                            }
+                            catch (Exception)
+                            {
+                                FillLog.Add($"{NameMark} - поз.{((IText)specTable.Cell[row, 0].Text).Str} - не корректная запись наоборотовских позиций");
+                            }
+                            try
+                            {
+                                totalWeight = double.Parse(((IText)specTable.Cell[row, 7].Text).Str); //Общая масса
+
+                            }
+                            catch (Exception)
+                            {
+                                FillLog.Add($"{NameMark} - поз.{((IText)specTable.Cell[row, 0].Text).Str} - не корректная запись общей массы");
+                            }
                             foundTableAssemble = true;
                             int markIndex = PosList.FindIndex(x => x.Pos == ((IText)specTable.Cell[row, 0].Text).Str);
                             if (markIndex != -1)
                             {
-                                PosList[markIndex].AddMark(specTable, row, NameMark, markCountN + markCountT);
+                                PosList[markIndex].AddMark(specTable, row, NameMark, markCountN + markCountT, weight, qantityT, qantityN, totalWeight);
                             }
                             else
                             {
-                                PosList.Add(new PosData(specTable, row, NameMark, markCountN + markCountT));
+                                PosList.Add(new PosData(specTable, row, NameMark, markCountN + markCountT, weight, qantityT, qantityN, totalWeight));
                             }
                         }
                     }
@@ -258,6 +298,7 @@ namespace PositionApplicability.ViewModels
         }
         private async Task FillPosAsync(CancellationToken token)
         {
+
             FillLog.Clear();
             if (!File.Exists($"{Directory.GetCurrentDirectory()}\\Resources\\Ведомость отправочных марок.frw"))
             {
@@ -431,31 +472,11 @@ namespace PositionApplicability.ViewModels
                 for (int markIndex = 0; markIndex < pos.Mark.Count; markIndex++)
                 {
                     ((IText)table.Cell[markIndex + 3, 0].Text).Str = pos.Mark[markIndex][0];
-                    ((IText)table.Cell[markIndex + 3, 1].Text).Str = pos.Mark[markIndex][1];
-                    try
-                    {
-                        if (pos.Mark[markIndex][2] != "")
-                        {
-                            ((IText)table.Cell[markIndex + 3, 2].Text).Str = $"{int.Parse(pos.Mark[markIndex][2]) * pos.Mark[markIndex][5]}"; //Количество таковских
-                        }
-                        if (pos.Mark[markIndex][3] != "")
-                        {
-                            ((IText)table.Cell[markIndex + 3, 3].Text).Str = $"{int.Parse(pos.Mark[markIndex][3]) * pos.Mark[markIndex][5]}"; //Количество наоборотовских
-                        }
-                    }
-                    catch (Exception e)
-                    {
-                        MessageBox.Show($"{e}");;
-                    }
-                    ((IText)table.Cell[markIndex + 3, 4].Text).Str = pos.Mark[markIndex][4];
-                    try
-                    {
-                        sumWeight[markIndex] = double.Parse(pos.Mark[markIndex][4]);
-                    }
-                    catch (Exception)
-                    {
-                        FillLog.Add($"{pos.Mark[markIndex][0]} - поз.{pos.Pos} - не корректная запись массы");
-                    }
+                    ((IText)table.Cell[markIndex + 3, 1].Text).Str = $"{pos.Mark[markIndex][1]}";
+                    ((IText)table.Cell[markIndex + 3, 2].Text).Str = $"{pos.Mark[markIndex][2] * pos.Mark[markIndex][5]}"; //Количество таковских
+                    ((IText)table.Cell[markIndex + 3, 3].Text).Str = $"{pos.Mark[markIndex][3] * pos.Mark[markIndex][5]}"; //Количество наоборотовских
+                    sumWeight[markIndex] = pos.Mark[markIndex][1] * ((pos.Mark[markIndex][2] + pos.Mark[markIndex][3]) * pos.Mark[markIndex][5]);
+                    ((IText)table.Cell[markIndex + 3, 4].Text).Str = sumWeight[markIndex].ToString(); //Количество наоборотовских
                 }
                 //Если вся масса корректно преобразована в числа, то суммируем
                 if (Array.IndexOf(sumWeight, 0) == -1)
