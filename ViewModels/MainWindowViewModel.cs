@@ -593,8 +593,14 @@ namespace PositionApplicability.ViewModels
                     {
                         
                         worksheet.Cell(i + incrementRow, 1).SetValue(PosList[i].Pos);
-                        worksheet.Cell(i + incrementRow, 2).SetValue(PosList[i].Mark[markIndex][2]);
-                        worksheet.Cell(i + incrementRow, 3).SetValue(PosList[i].Mark[markIndex][3]);
+                        if (PosList[i].Mark[markIndex][2] != 0)
+                        {
+                            worksheet.Cell(i + incrementRow, 2).SetValue(PosList[i].Mark[markIndex][2]);
+                        }
+                        if (PosList[i].Mark[markIndex][3] != 0)
+                        {
+                            worksheet.Cell(i + incrementRow, 3).SetValue(PosList[i].Mark[markIndex][3]);
+                        }
                         worksheet.Cell(i + incrementRow, 4).SetValue(PosList[i].Thickness);
                         worksheet.Cell(i + incrementRow, 5).SetValue(PosList[i].Width);
                         worksheet.Cell(i + incrementRow, 6).SetValue(PosList[i].Leigth);
