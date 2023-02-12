@@ -52,12 +52,13 @@ namespace PositionApplicability.ViewModels
         private double _pBFill_Value = 0;
         [ObservableProperty]
         private List<PosData> _posList = new();
-        
-        public List<string> ExtractionLog { get => _Extractionlog; set => _Extractionlog = value; }
-        private List<string> _Extractionlog = new();
 
-        public List<string> FillLog { get => _Filllog; set => _Filllog = value; }
-        private List<string> _Filllog = new();
+    
+
+        [ObservableProperty]
+        [NotifyCanExecuteChangedFor(nameof(OpenLogCommand))]
+        private List<string> _log = new();
+        
 
 
         #region Извлечение позиций
@@ -81,7 +82,7 @@ namespace PositionApplicability.ViewModels
         private async Task ExtractionPositionsAsync(CancellationToken token)
         {
             PosList.Clear();
-            ExtractionLog.Clear();
+            Log.Clear();
             Info = "Началось извлечение позиций";
             PBExtraction_Value = 1;
             string[] assemblyFiles;
@@ -112,7 +113,7 @@ namespace PositionApplicability.ViewModels
                 IKompasDocument2D kompasDocuments2D = (IKompasDocument2D)documents.Open(pathfile, false, false);
                 if (kompasDocuments2D == null)
                 {
-                    ExtractionLog.Add($"{pathfile} - не удалось открыть чертеж");
+                    Log.Add($"{pathfile} - не удалось открыть чертеж");
                     continue;
                 }
                 #region Получение имени марки из штампа
@@ -160,7 +161,7 @@ namespace PositionApplicability.ViewModels
                                 }
                                 catch (Exception)
                                 {
-                                    ExtractionLog.Add($"{NameMark} - не корректная запись количества марки");
+                                    Log.Add($"{NameMark} - не корректная запись количества марки");
                                 }
                             }
                         }
@@ -192,7 +193,7 @@ namespace PositionApplicability.ViewModels
                             }
                             catch (Exception)
                             {
-                                ExtractionLog.Add($"{NameMark} - поз.{((IText)specTable.Cell[row, 0].Text).Str} - не корректная запись массы");
+                                Log.Add($"{NameMark} - поз.{((IText)specTable.Cell[row, 0].Text).Str} - не корректная запись массы");
                             }
                             if (((IText)specTable.Cell[row, 1].Text).Str != "")
                             {
@@ -203,7 +204,7 @@ namespace PositionApplicability.ViewModels
                                 }
                                 catch (Exception)
                                 {
-                                    ExtractionLog.Add($"{NameMark} - поз.{((IText)specTable.Cell[row, 0].Text).Str} - не корректная запись таковских позиций");
+                                    Log.Add($"{NameMark} - поз.{((IText)specTable.Cell[row, 0].Text).Str} - не корректная запись таковских позиций");
                                 }
                             }
                             if (((IText)specTable.Cell[row, 2].Text).Str != "")
@@ -215,7 +216,7 @@ namespace PositionApplicability.ViewModels
                                 }
                                 catch (Exception)
                                 {
-                                    ExtractionLog.Add($"{NameMark} - поз.{((IText)specTable.Cell[row, 0].Text).Str} - не корректная запись наоборотовских позиций");
+                                    Log.Add($"{NameMark} - поз.{((IText)specTable.Cell[row, 0].Text).Str} - не корректная запись наоборотовских позиций");
                                 }
                             }
                             try
@@ -225,7 +226,7 @@ namespace PositionApplicability.ViewModels
                             }
                             catch (Exception)
                             {
-                                ExtractionLog.Add($"{NameMark} - поз.{((IText)specTable.Cell[row, 0].Text).Str} - не корректная запись общей массы");
+                                Log.Add($"{NameMark} - поз.{((IText)specTable.Cell[row, 0].Text).Str} - не корректная запись общей массы");
                             }
                             foundTableAssemble = true;
                             int markIndex = PosList.FindIndex(x => x.Pos == ((IText)specTable.Cell[row, 0].Text).Str);
@@ -242,11 +243,11 @@ namespace PositionApplicability.ViewModels
                 }
                 if (!foundTableAssemble)
                 {
-                    ExtractionLog.Add($"{kompasDocuments2D.Name} - спецификация не соответствует формату или не найдена");
+                    Log.Add($"{kompasDocuments2D.Name} - спецификация не соответствует формату или не найдена");
                 }
                 if (!foundTableMark)
                 {
-                    ExtractionLog.Add($"{kompasDocuments2D.Name} - ведомость отправочных марок не соответствует формату или не найдена");
+                    Log.Add($"{kompasDocuments2D.Name} - ведомость отправочных марок не соответствует формату или не найдена");
                 }
                 kompasDocuments2D.Close(Kompas6Constants.DocumentCloseOptions.kdDoNotSaveChanges);
                 if (token.IsCancellationRequested)
@@ -260,7 +261,7 @@ namespace PositionApplicability.ViewModels
             }
             kompas.Quit();
             PBExtraction_Value = 100;
-            WriteLog(ExtractionLog, "ExtractionLog");
+            WriteLog();
             Info = "Позиции извлечены";
         }
         #endregion
@@ -302,11 +303,12 @@ namespace PositionApplicability.ViewModels
             }
 
             await Task.Run(() => FillPosAsync(token));
+            OpenLogCommand.NotifyCanExecuteChanged();
+
         }
         private async Task FillPosAsync(CancellationToken token)
         {
-
-            FillLog.Clear();
+            Log.Clear();
             if (!File.Exists($"{Directory.GetCurrentDirectory()}\\Resources\\Ведомость отправочных марок.frw"))
             {
                 Info = "Не найден файл 'Ведомость отправочных марок.frw' в папке Resources";
@@ -346,18 +348,18 @@ namespace PositionApplicability.ViewModels
 
                 if (path.Length == 0)
                 {
-                    FillLog.Add($"поз. {pos.Pos} - деталировка не найдена");
+                    Log.Add($"поз. {pos.Pos} - деталировка не найдена");
                     continue;
                 }
                 else if(path.Length > 1)
                 {
-                    FillLog.Add($"поз. {pos.Pos} - найдено более одного чертежа деталировки");
+                    Log.Add($"поз. {pos.Pos} - найдено более одного чертежа деталировки");
                     continue;
                 }
                 IKompasDocument2D kompasDocuments2D = (IKompasDocument2D)documents.Open(path[0], false, false);
                 if (kompasDocuments2D == null)
                 {
-                    FillLog.Add($"поз. {pos.Pos} - не удалось открыть чертеж");
+                    Log.Add($"поз. {pos.Pos} - не удалось открыть чертеж");
                     continue;
                 }
                 #region Вставка таблицы "Ведомость отправочных марок" в чертеж деталировки
@@ -496,7 +498,7 @@ namespace PositionApplicability.ViewModels
                 kompasDocuments2D.Save();
                 if (kompasDocuments2D.Changed)
                 {
-                    FillLog.Add($"{kompasDocuments2D.Name} - не удалось сохранить");
+                    Log.Add($"{kompasDocuments2D.Name} - не удалось сохранить");
                 }
                 kompasDocuments2D.Close(Kompas6Constants.DocumentCloseOptions.kdDoNotSaveChanges);
                 if (token.IsCancellationRequested)
@@ -509,10 +511,10 @@ namespace PositionApplicability.ViewModels
                 PBFill_Value += 90 / PosList.Count;
             }
             kompas.Quit();
-            WriteLog(FillLog, "FillLog");
+            WriteLog();
             PBFill_Value = 100;
             Info = "Заполнение деталировки завершено";
-            if (FillLog.Count > 0)
+            if (Log.Count > 0)
             {
                 Info += ". Есть ошибки, посмотрите журнал.";
             }
@@ -660,15 +662,15 @@ namespace PositionApplicability.ViewModels
         /// <summary>
         /// Открыть файл журнала
         /// </summary>
-        /// <param name="namelog"></param>
-        [RelayCommand]
-        private void OpenLog(string namelog)
+        /// <param name="log"></param>
+        [RelayCommand(CanExecute = nameof(CanOpenLog))]
+        private void OpenLog()
         {
             Info = "";
-            if (File.Exists($"{namelog}.txt"))
+            if (File.Exists($"Log.txt"))
             {
                 var process = new Process();
-                process.StartInfo = new ProcessStartInfo($"{namelog}.txt")
+                process.StartInfo = new ProcessStartInfo($"Log.txt")
                 {
                     UseShellExecute = true,
                 };
@@ -679,18 +681,29 @@ namespace PositionApplicability.ViewModels
                 Info = "Файл журнала не найден.";
             }
         }
+        private bool CanOpenLog()
+        {
+            if (Log == null || Log.Count == 0)
+            {
+                return false;
+            }
+            else
+            {
+                return true;
+            }
+        }
 
         /// <summary>
         /// Запись логов
         /// </summary>
-        /// <param name="log"></param>
-        private void WriteLog(List<string> log, string nameLog)
+        /// <param name="Log"></param>
+        private void WriteLog()
         {
             try
             {
-                using (StreamWriter sw = new($"{nameLog}.txt", false))
+                using (StreamWriter sw = new($"Log.txt", false))
                 {
-                    foreach (var item in log)
+                    foreach (var item in Log)
                     {
                         sw.WriteLine(item);
                     }
@@ -699,7 +712,7 @@ namespace PositionApplicability.ViewModels
             }
             catch (Exception)
             {
-                Info = $"Не удалось сохранить файл журнала {nameLog}";
+                Info = $"Не удалось сохранить файл журнала";
             }
         }
     }
