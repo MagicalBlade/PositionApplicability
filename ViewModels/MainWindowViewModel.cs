@@ -285,6 +285,7 @@ namespace PositionApplicability.ViewModels
                 PathFolderPos = dialog.SelectedPath;
             }
         }
+
         #region Заполнение деталировки
         [RelayCommand(IncludeCancelCommand = true)]
         private async Task FillPos(CancellationToken token)
@@ -458,10 +459,10 @@ namespace PositionApplicability.ViewModels
                     $"{Directory.GetCurrentDirectory()}\\Resources\\Ведомость отправочных марок.frw",
                     true, 0, 0, 1, 0, false);
                 ksDocument2D ksDocument2D = kompas.TransferInterface(kompasDocuments2D,1 ,0);
-                ksDocument2D.ksMoveObj(drawingGroup.Reference, xSetPlacementTable, ySetPlacementTable);
+                //ksDocument2D.ksMoveObj(drawingGroup.Reference, xSetPlacementTable, ySetPlacementTable);
                 IDrawingTable drawingTable = drawingGroup.Objects[0]; //Таблица
                 ITable table = (ITable)drawingTable;
-                if (table.ColumnsCount != 6 || table.RowsCount < 5)
+                if (table.ColumnsCount != 2 || table.RowsCount < 2)
                 {
                     kompas.Quit();
                     PBFill_Value = 0;
@@ -470,32 +471,25 @@ namespace PositionApplicability.ViewModels
                 }
                 double[] sumWeight = new double[pos.Mark.Count];
                 //Создание строк таблицы
-                for (int indexrow = 0; table.RowsCount <= pos.Mark.Count + 3; indexrow++)
+                for (int indexrow = 0; table.RowsCount < pos.Mark.Count + 1; indexrow++)
                 {
-                    table.AddRow(indexrow + 3, true);
+                    table.AddRow(indexrow + 1, true);
                 }
                 //Заполнение строк таблицы
                 for (int markIndex = 0; markIndex < pos.Mark.Count; markIndex++)
                 {
-                    ((IText)table.Cell[markIndex + 3, 0].Text).Str = pos.Mark[markIndex][0];
-                    ((IText)table.Cell[markIndex + 3, 1].Text).Str = $"{pos.Mark[markIndex][1]}";
-                    if (pos.Mark[markIndex][2] != 0)
+                    if (pos.Mark[markIndex][2] != 0 || pos.Mark[markIndex][3] != 0)
                     {
-                        ((IText)table.Cell[markIndex + 3, 2].Text).Str = $"{pos.Mark[markIndex][2] * pos.Mark[markIndex][5]}"; //Количество таковских
+                        ((IText)table.Cell[markIndex + 1, 0].Text).Str = $"{(pos.Mark[markIndex][2] + pos.Mark[markIndex][3]) * pos.Mark[markIndex][5]}"; //Количество позиций всего
                     }
-                    if (pos.Mark[markIndex][3] != 0)
-                    {
-                        ((IText)table.Cell[markIndex + 3, 3].Text).Str = $"{pos.Mark[markIndex][3] * pos.Mark[markIndex][5]}"; //Количество наоборотовских
-                    }
-                    sumWeight[markIndex] = pos.Mark[markIndex][1] * ((pos.Mark[markIndex][2] + pos.Mark[markIndex][3]) * pos.Mark[markIndex][5]);
-                    ((IText)table.Cell[markIndex + 3, 4].Text).Str = sumWeight[markIndex].ToString(); //Количество наоборотовских
-                }
-                //Если вся масса корректно преобразована в числа, то суммируем
-                if (Array.IndexOf(sumWeight, 0) == -1)
-                {
-                    ((IText)table.Cell[table.RowsCount - 1, 4].Text).Str = sumWeight.Sum().ToString();
+                    ((IText)table.Cell[markIndex + 1, 1].Text).Str = pos.Mark[markIndex][0];
                 }
                 drawingTable.Update();
+                ksRectParam ksRectangleParam = kompas.GetParamStruct(15);
+                ksMathPointParam botPoint = ksRectangleParam.GetpBot();
+                ksDocument2D.ksGetObjGabaritRect(drawingGroup.Reference, ksRectangleParam);
+                
+                ksDocument2D.ksMoveObj(drawingGroup.Reference, xSetPlacementTable, Math.Abs(botPoint.y) + 70);
                 drawingGroup.Store();
                 #endregion
 
@@ -632,7 +626,7 @@ namespace PositionApplicability.ViewModels
             
             try
             {
-                workbook.SaveAs($"{PathFolderAssembly}\\Тест.xlsx");
+                workbook.SaveAs($"{PathFolderAssembly}\\Отчёт.xlsx");
             }
             catch (Exception)
             {
