@@ -78,6 +78,7 @@ namespace PositionApplicability.ViewModels
             }
             Info = "";
             await Task.Run(() => ExtractionPositionsAsync(token), token);
+            OpenLogCommand.NotifyCanExecuteChanged();
         }
         private async Task ExtractionPositionsAsync(CancellationToken token)
         {
@@ -530,7 +531,7 @@ namespace PositionApplicability.ViewModels
                 return;
             }
             //PosList.Sort(ComparePosData);
-            //Сортировка списака по номеру позиции
+            //Сортировка списка по номеру позиции
             static int ComparePosData(PosData x, PosData y)
             {
                 if (x.Pos == null || x.Pos == "")
