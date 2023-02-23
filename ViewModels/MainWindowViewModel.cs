@@ -522,6 +522,175 @@ namespace PositionApplicability.ViewModels
         }
         #endregion
 
+        #region Заполнение неуказанной шероховатости в деталировке
+        [RelayCommand(IncludeCancelCommand = true)]
+        private async Task SpecRough(CancellationToken token)
+        {
+            if (!Directory.Exists(PathFolderPos))
+            {
+                Info = "Не верный путь к деталям";
+                return;
+            }
+
+            await Task.Run(() => SpecRoughAsync(token));
+            OpenLogCommand.NotifyCanExecuteChanged();
+
+        }
+        private async Task SpecRoughAsync(CancellationToken token)
+        {
+            Log.Clear();
+            string pathRough = $@"{Directory.GetCurrentDirectory()}\Resources\Шероховатость.txt";
+            string valuesRoughStr = "";
+            if (!File.Exists(pathRough))
+            {
+                return;
+            }
+            if (!Directory.Exists(PathFolderPos))
+            {
+                return;
+            }
+            Info = "Начало заполнения шероховатости";
+            PBFill_Value = 1;
+            SearchOption searchOptionFill;
+            using (StreamReader reader = new StreamReader(pathRough))
+            {
+                valuesRoughStr = reader.ReadToEnd();
+            }
+            if (valuesRoughStr == "")
+            {
+                PBFill_Value = 0;
+                Info = "Файл со значениями шероховатости пуст";
+                return;
+            }
+            Dictionary<string, string> valuesRough = new Dictionary<string, string>();
+            foreach (string item in valuesRoughStr.Split(new string[] { "\r\n", "\r", "\n" }, StringSplitOptions.None))
+            {
+                string[] line = item.Split(' ', StringSplitOptions.None);
+                if (line.Length > 1)
+                {
+                    valuesRough.Add(line[0], line[1]);
+                }
+            }
+            if (IsAllDirectoryFill)
+            {
+                searchOptionFill = SearchOption.AllDirectories;
+            }
+            else
+            {
+                searchOptionFill = SearchOption.TopDirectoryOnly;
+            }
+            string[] filesDetailing = Directory.GetFiles(PathFolderPos, "*.cdw",searchOptionFill);
+            if (filesDetailing.Length == 0)
+            {
+                PBFill_Value = 0;
+                Info = "Не найдена деталировка";
+                return;
+            }
+            Type? kompasType = Type.GetTypeFromProgID("Kompas.Application.5", true);
+            if (kompasType == null)
+            {
+                Info = "Не удалось запустить компас";
+                return;
+            }
+            KompasObject? kompas = Activator.CreateInstance(kompasType) as KompasObject; //Запуск компаса
+            if (kompas == null)
+            {
+                Info = "Не удалось запустить компас";
+                return;
+            }
+            if (token.IsCancellationRequested)
+            {
+                kompas.Quit();
+                PBFill_Value = 0;
+                Info = "Заполнение шероховатости отменено";
+                return;
+            }
+            PBFill_Value = 10;
+            IApplication application = (IApplication)kompas.ksGetApplication7();
+            IDocuments documents = application.Documents;
+            foreach (string path in filesDetailing)
+            {
+                IDrawingDocument kompasDocument = (IDrawingDocument)documents.Open(path, false, false);
+                if (kompasDocument == null)
+                {
+                    PBFill_Value += 90 / filesDetailing.Length;
+                    Log.Add($"{path} - не удалось открыть");
+                    continue;
+                }
+                ILayoutSheets layoutSheets = kompasDocument.LayoutSheets;
+                ILayoutSheet layoutSheet = layoutSheets.ItemByNumber[1];
+                IStamp stamp = layoutSheet.Stamp;
+                IText text3 = stamp.Text[3];
+                string text3Str = text3.Str;
+                string thickness = "";
+                if (text3Str != "")
+                {
+                    string[] profile = text3Str.Split("$dsm; ".ToCharArray(), StringSplitOptions.RemoveEmptyEntries);
+                    if (profile.Length > 4)
+                    {
+                        thickness = profile[1];
+                    }
+                }
+                ISpecRough specRough = kompasDocument.SpecRough;
+                if (specRough != null)
+                {
+                    if (valuesRough.ContainsKey(thickness))
+                    {
+                        specRough.Text = $"Rz {valuesRough[thickness]}";
+                        specRough.AddSign = false;
+                        specRough.SignType = Kompas6Constants.ksRoughSignEnum.ksNoProcessingType;
+                        specRough.Distance = 2;
+                        specRough.Update();
+                    }
+                    else
+                    {
+                        Log.Add($"{path} - не найдена толщина. Проверьте правильность записи в штампе или в файле Resources\\Шероховатость.txt");
+                        kompasDocument.Close(Kompas6Constants.DocumentCloseOptions.kdDoNotSaveChanges);
+                    }
+                }
+                kompasDocument.Save();
+                if (kompasDocument.Changed)
+                {
+                    Log.Add($"{path} - не удалось сохранить");
+                }
+                kompasDocument.Close(Kompas6Constants.DocumentCloseOptions.kdDoNotSaveChanges);
+                PBFill_Value += 90 / filesDetailing.Length;
+                if (token.IsCancellationRequested)
+                {
+                    kompas.Quit();
+                    PBFill_Value = 0;
+                    Info = "Заполнение шероховатости отменено";
+                    return;
+                }
+            }
+            kompas.Quit();
+            PBFill_Value = 100;
+            WriteLog();
+            Info = "Заполнение шероховатости завершено";
+            if (Log.Count > 0)
+            {
+                Info += ". Есть ошибки, посмотрите журнал.";
+            }
+        }
+        #endregion
+        [RelayCommand]
+        private void OpenTxT(string file)
+        {
+            Info = "";
+            if (File.Exists($"{file}"))
+            {
+                var process = new Process();
+                process.StartInfo = new ProcessStartInfo($"{file}")
+                {
+                    UseShellExecute = true,
+                };
+                process.Start();
+            }
+            else
+            {
+                Info = $"Файл {file} не найден";
+            }
+        }
         [RelayCommand]
         private void SaveExcel()
         {

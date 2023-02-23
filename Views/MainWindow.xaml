@@ -50,6 +50,11 @@
                 <Button Content="Отмена" HorizontalAlignment="Center" Padding="3" Margin="3"  Command="{Binding FillPosCancelCommand}"/>
             </StackPanel>
             <StackPanel Orientation="Horizontal" HorizontalAlignment="Center">
+                <Button Content="Шероховатость" ToolTip="Заполнить шероховатость в деталировке" HorizontalAlignment="Center" Padding="3" Margin="3"  Command="{Binding SpecRoughCommand}"/>
+                <Button Content="Отмена" HorizontalAlignment="Center" Padding="3" Margin="3"  Command="{Binding SpecRoughCancelCommand}"/>
+                <Button Content="Данные" ToolTip="Открыть файл с данными шероховатости" HorizontalAlignment="Center" Padding="3" Margin="3"  Command="{Binding OpenTxTCommand}" CommandParameter="Resources\Шероховатость.txt"/>
+            </StackPanel>
+            <StackPanel Orientation="Horizontal" HorizontalAlignment="Center">
                 <Button Content="Сохранить в Excel" HorizontalAlignment="Center" Padding="3" Margin="3"  Command="{Binding SaveExcelCommand}"/>
                 <Button Content="Журнал" HorizontalAlignment="Center" Padding="3" Margin="3" Command="{Binding OpenLogCommand}"/>
             </StackPanel>
