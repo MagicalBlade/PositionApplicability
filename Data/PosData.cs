@@ -19,26 +19,6 @@ namespace PositionApplicability.Data
         /// </summary>
         public List<dynamic[]> Mark { get => _mark; set => _mark = value; }
         private List<dynamic[]> _mark = new();
-        /// <summary>
-        /// Толщина детали
-        /// </summary>
-        public string? Thickness { get => _thickness; set => _thickness = value; }
-        private string? _thickness;
-        /// <summary>
-        /// Ширина детали
-        /// </summary>
-        public string? Width { get => _width; set => _width = value; }
-        private string? _width;
-        /// <summary>
-        /// Длина детали
-        /// </summary>
-        public string? Leigth { get => _leigth; set => _leigth = value; }
-        private string? _leigth;
-        /// <summary>
-        /// Марка стали позиции
-        /// </summary>
-        public string? Steel { get => steel; set => steel = value; }
-        private string? steel;
 
         /// <summary>
         /// Масса позиции
@@ -56,27 +36,54 @@ namespace PositionApplicability.Data
         public string? List { get => _list; set => _list = value; }
 
         private string? _list;
+        /// <summary>
+        /// Есть ошибка в заполнении толщины?
+        /// </summary>
+        public bool IsErrorThickness { get => _isErrorThickness; set => _isErrorThickness = value; }
+        private bool _isErrorThickness = false;
+        /// <summary>
+        /// Есть ошибки в заполнении ширины?
+        /// </summary>
+        public bool IsErrorWidth { get => _isErrorWidth; set => _isErrorWidth = value; }
+        private bool _isErrorWidth = false;
+        /// <summary>
+        /// Есть ошибки в заполнении длины?
+        /// </summary>
+        public bool IsErrorLength { get => _isErrorLength; set => _isErrorLength = value; }
+        private bool _isErrorLength = false;
+        /// <summary>
+        /// Есть ошибки в заполнении стали?
+        /// </summary>
+        public bool IsErrorSteel { get => _isErrorSteel; set => _isErrorSteel = value; }
+
+        private bool _isErrorSteel = false;
+        /// <summary>
+        /// Есть ошибки в заполнении массы одной позиции
+        /// </summary>
+        public bool IsErrorWeight { get => _isErrorWeight; set => _isErrorWeight = value; }
+        private bool _isErrorWeight = false;
+
 
         public PosData(ITable table, int row, string nameMark, int markcount, double weight, double qantityT, double qantityN, double totalWeight)
         {
             Pos = ((IText)table.Cell[row, 0].Text).Str;
-            Thickness= ((IText)table.Cell[row, 3].Text).Str;
-            Width = ((IText)table.Cell[row, 4].Text).Str;
-            Leigth = ((IText)table.Cell[row, 5].Text).Str;
-            Steel = ((IText)table.Cell[row, 8].Text).Str;
             List = ((IText)table.Cell[row, 9].Text).Str;
             this.AddMark(table, row, nameMark, markcount, weight, qantityT, qantityN, totalWeight);
         }
         public bool AddMark(ITable table, int row, string nameMark, int markcount, double weight, double qantityT, double qantityN, double totalWeight)
         {
-            Mark.Add(new dynamic[6]
+            Mark.Add(new dynamic[10]
             {
                 nameMark,
                 weight, //Масса одной позиции
                 qantityT, //Количество таковских позиций
                 qantityN, //Количество наоборотовских позиций
                 totalWeight, //Общая масса
-                markcount // Количество марок
+                markcount, // Количество марок
+                ((IText)table.Cell[row, 3].Text).Str, // Толщина
+                ((IText)table.Cell[row, 4].Text).Str, // Ширина
+                ((IText)table.Cell[row, 5].Text).Str, // Длина
+                ((IText)table.Cell[row, 8].Text).Str, // Сталь
             });
             return true;
         }

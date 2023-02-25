@@ -139,7 +139,7 @@ namespace PositionApplicability.ViewModels
                 {
                     ISymbols2DContainer symbols2DContainer = (ISymbols2DContainer)view;
                     IDrawingTables drawingTables = symbols2DContainer.DrawingTables;
-                    //Ведоиость отправочных марок
+                    //Ведомость отправочных марок
                    
                     foreach (ITable table in drawingTables)
                     {
@@ -233,6 +233,33 @@ namespace PositionApplicability.ViewModels
                             int markIndex = PosList.FindIndex(x => x.Pos == ((IText)specTable.Cell[row, 0].Text).Str);
                             if (markIndex != -1)
                             {
+                                //Проверка на ошибку в нумерации позиций, повторяющиеся номера позиций или ошибки в заполнении.
+                                if (PosList[markIndex].Mark[0][6] != ((IText)specTable.Cell[row, 3].Text).Str)
+                                {
+                                    Log.Add($"поз.{((IText)specTable.Cell[row, 0].Text).Str} толщина различается! Проверьте соответствие по всем маркам.");
+                                    PosList[markIndex].IsErrorThickness = true;
+                                }
+                                if (PosList[markIndex].Mark[0][7] != ((IText)specTable.Cell[row, 4].Text).Str)
+                                {
+                                    Log.Add($"поз.{((IText)specTable.Cell[row, 0].Text).Str} ширина различается! Проверьте соответствие по всем маркам.");
+                                    PosList[markIndex].IsErrorWidth = true;
+                                }
+                                if (PosList[markIndex].Mark[0][8] != ((IText)specTable.Cell[row, 5].Text).Str)
+                                {
+                                    Log.Add($"поз.{((IText)specTable.Cell[row, 0].Text).Str} длина различается! Проверьте соответствие по всем маркам.");
+                                    PosList[markIndex].IsErrorLength = true;
+                                }
+                                if (PosList[markIndex].Mark[0][9] != ((IText)specTable.Cell[row, 8].Text).Str)
+                                {
+                                    Log.Add($"поз.{((IText)specTable.Cell[row, 0].Text).Str} сталь различается! Проверьте соответствие по всем маркам.");
+                                    PosList[markIndex].IsErrorSteel = true;
+                                }
+                                if (PosList[markIndex].Mark[0][1] != weight)
+                                {
+                                    Log.Add($"поз.{((IText)specTable.Cell[row, 0].Text).Str} вес различается! Проверьте соответствие по всем маркам.");
+                                    PosList[markIndex].IsErrorWeight = true;
+                                }
+
                                 PosList[markIndex].AddMark(specTable, row, NameMark, markCountN + markCountT, weight, qantityT, qantityN, totalWeight);
                             }
                             else
@@ -264,6 +291,10 @@ namespace PositionApplicability.ViewModels
             PBExtraction_Value = 100;
             WriteLog();
             Info = "Позиции извлечены";
+            if (Log.Count > 0)
+            {
+                Info += ". Есть ошибки, посмотрите журнал.";
+            }
         }
         #endregion
 
@@ -763,7 +794,26 @@ namespace PositionApplicability.ViewModels
                 {
                     for (int markIndex = 0; markIndex < PosList[i].Mark.Count; markIndex++)
                     {
-                        
+                        if (PosList[i].IsErrorThickness)
+                        {
+                            worksheet.Cell(i + incrementRow, 4).Style.Fill.BackgroundColor = XLColor.Red;
+                        }
+                        if (PosList[i].IsErrorWidth)
+                        {
+                            worksheet.Cell(i + incrementRow, 5).Style.Fill.BackgroundColor = XLColor.Red;
+                        }
+                        if (PosList[i].IsErrorLength)
+                        {
+                            worksheet.Cell(i + incrementRow, 6).Style.Fill.BackgroundColor = XLColor.Red;
+                        }
+                        if (PosList[i].IsErrorSteel)
+                        {
+                            worksheet.Cell(i + incrementRow, 9).Style.Fill.BackgroundColor = XLColor.Red;
+                        }
+                        if (PosList[i].IsErrorWeight)
+                        {
+                            worksheet.Cell(i + incrementRow, 7).Style.Fill.BackgroundColor = XLColor.Red;
+                        }
                         worksheet.Cell(i + incrementRow, 1).SetValue(PosList[i].Pos);
                         if (PosList[i].Mark[markIndex][2] != 0)
                         {
@@ -773,15 +823,15 @@ namespace PositionApplicability.ViewModels
                         {
                             worksheet.Cell(i + incrementRow, 3).SetValue(PosList[i].Mark[markIndex][3]);
                         }
-                        worksheet.Cell(i + incrementRow, 4).SetValue(PosList[i].Thickness);
-                        worksheet.Cell(i + incrementRow, 5).SetValue(PosList[i].Width);
-                        worksheet.Cell(i + incrementRow, 6).SetValue(PosList[i].Leigth);
-                        worksheet.Cell(i + incrementRow, 7).SetValue(PosList[i].Mark[markIndex][1]);
-                        worksheet.Cell(i + incrementRow, 8).SetValue(PosList[i].Mark[markIndex][4]);
-                        worksheet.Cell(i + incrementRow, 9).SetValue(PosList[i].Steel);
-                        worksheet.Cell(i + incrementRow, 10).SetValue(PosList[i].List);
-                        worksheet.Cell(i + incrementRow, 11).SetValue(PosList[i].Mark[markIndex][0]);
-                        worksheet.Cell(i + incrementRow, 12).SetValue(PosList[i].Mark[markIndex][5]);
+                        worksheet.Cell(i + incrementRow, 4).SetValue(PosList[i].Mark[markIndex][6]); //Толщина
+                        worksheet.Cell(i + incrementRow, 5).SetValue(PosList[i].Mark[markIndex][7]); //Ширина
+                        worksheet.Cell(i + incrementRow, 6).SetValue(PosList[i].Mark[markIndex][8]); //Длина
+                        worksheet.Cell(i + incrementRow, 7).SetValue(PosList[i].Mark[markIndex][1]); //Масса одной позиции
+                        worksheet.Cell(i + incrementRow, 8).SetValue(PosList[i].Mark[markIndex][4]); //Общая масса
+                        worksheet.Cell(i + incrementRow, 9).SetValue(PosList[i].Mark[markIndex][9]); //Сталь
+                        worksheet.Cell(i + incrementRow, 10).SetValue(PosList[i].List); //Примечание
+                        worksheet.Cell(i + incrementRow, 11).SetValue(PosList[i].Mark[markIndex][0]); //Название марки
+                        worksheet.Cell(i + incrementRow, 12).SetValue(PosList[i].Mark[markIndex][5]); //Количество марок
                         incrementRow++;
                     }
                     incrementRow--;
