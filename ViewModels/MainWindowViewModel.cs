@@ -24,8 +24,14 @@ namespace PositionApplicability.ViewModels
         [ObservableProperty]
         private double _widthWindow = Properties.Settings.Default.Width;
         #endregion
+        /// <summary>
+        /// Путь к сборкам
+        /// </summary>
         [ObservableProperty]
         private string _pathFolderAssembly = Properties.Settings.Default.PathFolderAssembly;
+        /// <summary>
+        /// Путь к деталировкам
+        /// </summary>
         [ObservableProperty]
         private string _pathFolderPos = Properties.Settings.Default.PathFolderPos;
         //Спецификация
@@ -50,10 +56,16 @@ namespace PositionApplicability.ViewModels
         /// </summary>
         [ObservableProperty]
         private double _pBFill_Value = 0;
+        /// <summary>
+        /// Массив позиций с данными по ним
+        /// </summary>
         [ObservableProperty]
         private List<PosData> _posList = new();
-
-    
+        /// <summary>
+        /// Данные по маркам для ММС
+        /// </summary>
+        [ObservableProperty]
+        private List<string[]> _marksforMMC = new List<string[]>();
 
         [ObservableProperty]
         [NotifyCanExecuteChangedFor(nameof(OpenLogCommand))]
@@ -83,6 +95,7 @@ namespace PositionApplicability.ViewModels
         private async Task ExtractionPositionsAsync(CancellationToken token)
         {
             PosList.Clear();
+            MarksforMMC.Clear();
             Log.Clear();
             Info = "Началось извлечение позиций";
             PBExtraction_Value = 1;
@@ -111,6 +124,13 @@ namespace PositionApplicability.ViewModels
             IDocuments documents = application.Documents;
             foreach (string pathfile in assemblyFiles)
             {
+                string mark = "";
+                string markName = "";
+                int markCountT = 0;
+                int markCountN = 0;
+                string markWeight = "";
+                string markTotalWeight = "";
+                string markSheet = "";
                 IKompasDocument2D kompasDocuments2D = (IKompasDocument2D)documents.Open(pathfile, false, false);
                 if (kompasDocuments2D == null)
                 {
@@ -119,12 +139,19 @@ namespace PositionApplicability.ViewModels
                 }
                 #region Получение имени марки из штампа
                 ILayoutSheets layoutSheets = kompasDocuments2D.LayoutSheets;
-                string NameMark = "";
                 foreach (ILayoutSheet layoutSheet in layoutSheets)
                 {
                     IStamp stamp = layoutSheet.Stamp;
-                    IText text = stamp.Text[2];
-                    NameMark = text.Str.Split(" ")[^1];
+                    IText text2 = stamp.Text[2]; //Текст из ячейки "Обозначения документа"
+                    string[] text2Split = text2.Str.Split(" ");
+                    mark = text2Split[^1];
+                    //Записываем название марки
+                    for (int i = 0; i < text2Split.Length - 1; i++)
+                    {
+                        markName += text2Split[i] + " ";
+                    }
+                    IText text16001 = stamp.Text[16001]; //Текст из ячейки "Лист"
+                    markSheet = text16001.Str;
                     break;
                 }
                 #endregion
@@ -133,8 +160,6 @@ namespace PositionApplicability.ViewModels
                 bool foundTableAssemble = false;
                 bool foundTableMark = false;
                 ITable? specTable = null;
-                int markCountT = 0;
-                int markCountN = 0;
                 foreach (IView view in views)
                 {
                     ISymbols2DContainer symbols2DContainer = (ISymbols2DContainer)view;
@@ -162,8 +187,11 @@ namespace PositionApplicability.ViewModels
                                 }
                                 catch (Exception)
                                 {
-                                    Log.Add($"{NameMark} - не корректная запись количества марки");
+                                    Log.Add($"{mark} - не корректная запись количества марки");
                                 }
+                                //Запись масс марки
+                                markWeight = ((IText)table.Cell[3, 3].Text).Str;
+                                markTotalWeight = ((IText)table.Cell[3, 4].Text).Str;
                             }
                         }
                     }
@@ -194,7 +222,7 @@ namespace PositionApplicability.ViewModels
                             }
                             catch (Exception)
                             {
-                                Log.Add($"{NameMark} - поз.{((IText)specTable.Cell[row, 0].Text).Str} - не корректная запись массы");
+                                Log.Add($"{mark} - поз.{((IText)specTable.Cell[row, 0].Text).Str} - не корректная запись массы");
                             }
                             if (((IText)specTable.Cell[row, 1].Text).Str != "")
                             {
@@ -205,7 +233,7 @@ namespace PositionApplicability.ViewModels
                                 }
                                 catch (Exception)
                                 {
-                                    Log.Add($"{NameMark} - поз.{((IText)specTable.Cell[row, 0].Text).Str} - не корректная запись таковских позиций");
+                                    Log.Add($"{mark} - поз.{((IText)specTable.Cell[row, 0].Text).Str} - не корректная запись таковских позиций");
                                 }
                             }
                             if (((IText)specTable.Cell[row, 2].Text).Str != "")
@@ -217,7 +245,7 @@ namespace PositionApplicability.ViewModels
                                 }
                                 catch (Exception)
                                 {
-                                    Log.Add($"{NameMark} - поз.{((IText)specTable.Cell[row, 0].Text).Str} - не корректная запись наоборотовских позиций");
+                                    Log.Add($"{mark} - поз.{((IText)specTable.Cell[row, 0].Text).Str} - не корректная запись наоборотовских позиций");
                                 }
                             }
                             try
@@ -227,7 +255,7 @@ namespace PositionApplicability.ViewModels
                             }
                             catch (Exception)
                             {
-                                Log.Add($"{NameMark} - поз.{((IText)specTable.Cell[row, 0].Text).Str} - не корректная запись общей массы");
+                                Log.Add($"{mark} - поз.{((IText)specTable.Cell[row, 0].Text).Str} - не корректная запись общей массы");
                             }
                             foundTableAssemble = true;
                             int markIndex = PosList.FindIndex(x => x.Pos == ((IText)specTable.Cell[row, 0].Text).Str);
@@ -260,11 +288,11 @@ namespace PositionApplicability.ViewModels
                                     PosList[markIndex].IsErrorWeight = true;
                                 }
 
-                                PosList[markIndex].AddMark(specTable, row, NameMark, markCountN + markCountT, weight, qantityT, qantityN, totalWeight);
+                                PosList[markIndex].AddMark(specTable, row, mark, markCountN + markCountT, weight, qantityT, qantityN, totalWeight);
                             }
                             else
                             {
-                                PosList.Add(new PosData(specTable, row, NameMark, markCountN + markCountT, weight, qantityT, qantityN, totalWeight));
+                                PosList.Add(new PosData(specTable, row, mark, markCountN + markCountT, weight, qantityT, qantityN, totalWeight));
                             }
                         }
                     }
@@ -285,6 +313,19 @@ namespace PositionApplicability.ViewModels
                     Info = "Извлечение отменено";
                     return;
                 }
+
+                //Подготовка данных по маркам для ММС
+                MarksforMMC.Add(new string[7] 
+                {
+                    mark,
+                    markName,
+                    markCountT.ToString(),
+                    markCountN.ToString(),
+                    markWeight,
+                    markTotalWeight,
+                    markSheet
+                });
+
                 PBExtraction_Value += 90 / assemblyFiles.Length;
             }
             kompas.Quit();
@@ -486,6 +527,17 @@ namespace PositionApplicability.ViewModels
                 IView view = views.View["Системный вид"];
                 view.Current = true;
                 view.Update();
+                //Поиск существующих таблиц "Ведомость отправочных марок" и их удаление
+                ISymbols2DContainer symbols2DContainer = (ISymbols2DContainer)view;
+                IDrawingTables drawingTables = symbols2DContainer.DrawingTables;
+                foreach (IDrawingTable item in drawingTables)
+                {
+                    ITable tableSearch = (ITable)item;
+                    if (tableSearch.ColumnsCount == 2 && ((IText)tableSearch.Cell[0,0].Text).Str == "Кол-во" && ((IText)tableSearch.Cell[0, 1].Text).Str == "Марка")
+                    {
+                        item.Delete();
+                    }
+                }
                 IKompasDocument2D1 kompasDocument2D1 = (IKompasDocument2D1)kompasDocuments2D;
                 IDrawingGroups drawingGroups = kompasDocument2D1.DrawingGroups;
                 IDrawingGroup drawingGroup = drawingGroups.Add(true, "");
@@ -722,6 +774,9 @@ namespace PositionApplicability.ViewModels
                 Info = $"Файл {file} не найден";
             }
         }
+        /// <summary>
+        /// Сохранить файл отчёта
+        /// </summary>
         [RelayCommand]
         private void SaveExcel()
         {
@@ -767,28 +822,29 @@ namespace PositionApplicability.ViewModels
             
 
             XLWorkbook workbook = new();
-            IXLWorksheet worksheet = workbook.Worksheets.Add("Позиции");
+            #region Лист "Позиции"
+            IXLWorksheet worksheetPos = workbook.Worksheets.Add("Позиции");
             int incrementRow = 3; //Начальная строка
             #region Формирование шапки листа
-            worksheet.Cell(1, 1).SetValue("Поз.");
-            worksheet.Cell(1, 2).SetValue("Кол-во");
-            worksheet.Cell(1, 4).SetValue("Сечение, мм");
-            worksheet.Cell(1, 7).SetValue("Масса, кг");
-            worksheet.Cell(1, 9).SetValue("Материал");
-            worksheet.Cell(1, 10).SetValue("Примечание");
-            worksheet.Cell(1, 11).SetValue("Марка");
-            worksheet.Cell(1, 12).SetValue("Кол-во");
-            worksheet.Cell(2, 2).SetValue("т");
-            worksheet.Cell(2, 3).SetValue("н");
-            worksheet.Cell(2, 4).SetValue("толщина");
-            worksheet.Cell(2, 5).SetValue("ширина");
-            worksheet.Cell(2, 6).SetValue("длина");
-            worksheet.Cell(2, 7).SetValue("шт.");
-            worksheet.Cell(2, 8).SetValue("общ.");
-            worksheet.Cell(2, 12).SetValue("Марок");
+            worksheetPos.Cell(1, 1).SetValue("Поз.");
+            worksheetPos.Cell(1, 2).SetValue("Кол-во");
+            worksheetPos.Cell(1, 4).SetValue("Сечение, мм");
+            worksheetPos.Cell(1, 7).SetValue("Масса, кг");
+            worksheetPos.Cell(1, 9).SetValue("Материал");
+            worksheetPos.Cell(1, 10).SetValue("Примечание");
+            worksheetPos.Cell(1, 11).SetValue("Марка");
+            worksheetPos.Cell(1, 12).SetValue("Кол-во");
+            worksheetPos.Cell(2, 2).SetValue("т");
+            worksheetPos.Cell(2, 3).SetValue("н");
+            worksheetPos.Cell(2, 4).SetValue("толщина");
+            worksheetPos.Cell(2, 5).SetValue("ширина");
+            worksheetPos.Cell(2, 6).SetValue("длина");
+            worksheetPos.Cell(2, 7).SetValue("шт.");
+            worksheetPos.Cell(2, 8).SetValue("общ.");
+            worksheetPos.Cell(2, 12).SetValue("Марок");
             #endregion
 
-            if (worksheet != null)
+            if (worksheetPos != null)
             {
                 for (int i = 0; i < PosList.Count; i++)
                 {
@@ -796,62 +852,116 @@ namespace PositionApplicability.ViewModels
                     {
                         if (PosList[i].IsErrorThickness)
                         {
-                            worksheet.Cell(i + incrementRow, 4).Style.Fill.BackgroundColor = XLColor.Red;
+                            worksheetPos.Cell(i + incrementRow, 4).Style.Fill.BackgroundColor = XLColor.Red;
                         }
                         if (PosList[i].IsErrorWidth)
                         {
-                            worksheet.Cell(i + incrementRow, 5).Style.Fill.BackgroundColor = XLColor.Red;
+                            worksheetPos.Cell(i + incrementRow, 5).Style.Fill.BackgroundColor = XLColor.Red;
                         }
                         if (PosList[i].IsErrorLength)
                         {
-                            worksheet.Cell(i + incrementRow, 6).Style.Fill.BackgroundColor = XLColor.Red;
+                            worksheetPos.Cell(i + incrementRow, 6).Style.Fill.BackgroundColor = XLColor.Red;
                         }
                         if (PosList[i].IsErrorSteel)
                         {
-                            worksheet.Cell(i + incrementRow, 9).Style.Fill.BackgroundColor = XLColor.Red;
+                            worksheetPos.Cell(i + incrementRow, 9).Style.Fill.BackgroundColor = XLColor.Red;
                         }
                         if (PosList[i].IsErrorWeight)
                         {
-                            worksheet.Cell(i + incrementRow, 7).Style.Fill.BackgroundColor = XLColor.Red;
+                            worksheetPos.Cell(i + incrementRow, 7).Style.Fill.BackgroundColor = XLColor.Red;
                         }
-                        worksheet.Cell(i + incrementRow, 1).SetValue(PosList[i].Pos);
+                        worksheetPos.Cell(i + incrementRow, 1).SetValue(PosList[i].Pos);
                         if (PosList[i].Mark[markIndex][2] != 0)
                         {
-                            worksheet.Cell(i + incrementRow, 2).SetValue(PosList[i].Mark[markIndex][2]);
+                            worksheetPos.Cell(i + incrementRow, 2).SetValue(PosList[i].Mark[markIndex][2]);
                         }
                         if (PosList[i].Mark[markIndex][3] != 0)
                         {
-                            worksheet.Cell(i + incrementRow, 3).SetValue(PosList[i].Mark[markIndex][3]);
+                            worksheetPos.Cell(i + incrementRow, 3).SetValue(PosList[i].Mark[markIndex][3]);
                         }
-                        worksheet.Cell(i + incrementRow, 4).SetValue(PosList[i].Mark[markIndex][6]); //Толщина
-                        worksheet.Cell(i + incrementRow, 5).SetValue(PosList[i].Mark[markIndex][7]); //Ширина
-                        worksheet.Cell(i + incrementRow, 6).SetValue(PosList[i].Mark[markIndex][8]); //Длина
-                        worksheet.Cell(i + incrementRow, 7).SetValue(PosList[i].Mark[markIndex][1]); //Масса одной позиции
-                        worksheet.Cell(i + incrementRow, 8).SetValue(PosList[i].Mark[markIndex][4]); //Общая масса
-                        worksheet.Cell(i + incrementRow, 9).SetValue(PosList[i].Mark[markIndex][9]); //Сталь
-                        worksheet.Cell(i + incrementRow, 10).SetValue(PosList[i].List); //Примечание
-                        worksheet.Cell(i + incrementRow, 11).SetValue(PosList[i].Mark[markIndex][0]); //Название марки
-                        worksheet.Cell(i + incrementRow, 12).SetValue(PosList[i].Mark[markIndex][5]); //Количество марок
+                        worksheetPos.Cell(i + incrementRow, 4).SetValue(PosList[i].Mark[markIndex][6]); //Толщина
+                        worksheetPos.Cell(i + incrementRow, 5).SetValue(PosList[i].Mark[markIndex][7]); //Ширина
+                        worksheetPos.Cell(i + incrementRow, 6).SetValue(PosList[i].Mark[markIndex][8]); //Длина
+                        worksheetPos.Cell(i + incrementRow, 7).SetValue(PosList[i].Mark[markIndex][1]); //Масса одной позиции
+                        worksheetPos.Cell(i + incrementRow, 8).SetValue(PosList[i].Mark[markIndex][4]); //Общая масса
+                        worksheetPos.Cell(i + incrementRow, 9).SetValue(PosList[i].Mark[markIndex][9]); //Сталь
+                        worksheetPos.Cell(i + incrementRow, 10).SetValue(PosList[i].List); //Примечание
+                        worksheetPos.Cell(i + incrementRow, 11).SetValue(PosList[i].Mark[markIndex][0]); //Название марки
+                        worksheetPos.Cell(i + incrementRow, 12).SetValue(PosList[i].Mark[markIndex][5]); //Количество марок
                         incrementRow++;
                     }
                     incrementRow--;
                 }
-                worksheet.DataType = XLDataType.Text;
+                worksheetPos.DataType = XLDataType.Text;
                 //Ширина колонки по содержимому
-                worksheet.Columns(1, PosList.Count).AdjustToContents(5.0, 100.0);
+                worksheetPos.Columns(1, PosList.Count).AdjustToContents(5.0, 100.0);
                 #region Объединение ячеек
-                worksheet.Range("B1:C1").Row(1).Merge();
-                worksheet.Range("D1:F1").Row(1).Merge();
-                worksheet.Range("G1:H1").Row(1).Merge();
-                worksheet.Range("A1:A2").Column(1).Merge();
-                worksheet.Range("I1:I2").Column(1).Merge();
-                worksheet.Range("J1:J2").Column(1).Merge();
-                worksheet.Range("K1:K2").Column(1).Merge(); 
+                worksheetPos.Range("B1:C1").Row(1).Merge();
+                worksheetPos.Range("D1:F1").Row(1).Merge();
+                worksheetPos.Range("G1:H1").Row(1).Merge();
+                worksheetPos.Range("A1:A2").Column(1).Merge();
+                worksheetPos.Range("I1:I2").Column(1).Merge();
+                worksheetPos.Range("J1:J2").Column(1).Merge();
+                worksheetPos.Range("K1:K2").Column(1).Merge();
                 #endregion
-                worksheet.Columns(1, PosList.Count).Style.Alignment.SetHorizontal(XLAlignmentHorizontalValues.Center);
-                worksheet.Columns(1, PosList.Count).Style.Alignment.SetVertical(XLAlignmentVerticalValues.Center);
+                worksheetPos.Columns(1, PosList.Count).Style.Alignment.SetHorizontal(XLAlignmentHorizontalValues.Center);
+                worksheetPos.Columns(1, PosList.Count).Style.Alignment.SetVertical(XLAlignmentVerticalValues.Center);
             }
-            
+            #endregion
+
+            #region Лист "ММС"
+            IXLWorksheet worksheetMMC = workbook.Worksheets.Add("ММС");
+            int incrementRowMMC = 3;
+            #region Формирование шапки листа
+            worksheetMMC.Cell(1, 1).SetValue("Отпр.");
+            worksheetMMC.Cell(1, 2).SetValue("Наименование");
+            worksheetMMC.Cell(1, 3).SetValue("Кол-во");
+            worksheetMMC.Cell(1, 5).SetValue("Масса, кг");
+            worksheetMMC.Cell(1, 7).SetValue("№ черт.");
+            worksheetMMC.Cell(2, 1).SetValue("марка");
+            worksheetMMC.Cell(2, 3).SetValue("т");
+            worksheetMMC.Cell(2, 4).SetValue("н");
+            worksheetMMC.Cell(2, 5).SetValue("шт.");
+            worksheetMMC.Cell(2, 6).SetValue("общ.");
+            #endregion
+
+            for (int line = 0; line < MarksforMMC.Count; line++)
+            {
+                worksheetMMC.Cell(line + incrementRowMMC, 1).SetValue(MarksforMMC[line][0]); //Марка
+                worksheetMMC.Cell(line + incrementRowMMC, 2).SetValue(MarksforMMC[line][1].Trim()); //Название марки
+                if (MarksforMMC[line][2] != "0")
+                {
+                    worksheetMMC.Cell(line + incrementRowMMC, 3).SetValue(MarksforMMC[line][2]); //Таковское количество
+                }
+                if (MarksforMMC[line][3] != "0")
+                {
+                    worksheetMMC.Cell(line + incrementRowMMC, 4).SetValue(MarksforMMC[line][3]); //Наоборотовское количество
+                }
+                worksheetMMC.Cell(line + incrementRowMMC, 5).SetValue(MarksforMMC[line][4]); //Единичная масса
+                worksheetMMC.Cell(line + incrementRowMMC, 6).SetValue(MarksforMMC[line][5]); //Общая масса
+                worksheetMMC.Cell(line + incrementRowMMC, 7).SetValue(MarksforMMC[line][6]); //Номер листа
+                var cellWithFormulaA1 = worksheetMMC.Cell(line + incrementRowMMC, 8);
+                cellWithFormulaA1.FormulaA1 = $@"==IF(((C{line + incrementRowMMC}+D{line + incrementRowMMC})*E{line + incrementRowMMC})=F{line + incrementRowMMC}, True, False)";
+                if (cellWithFormulaA1.Value.ToString() == "False")
+                {
+                    worksheetMMC.Cell(line + incrementRowMMC, 6).Style.Fill.BackgroundColor = XLColor.Red;
+                }
+                worksheetMMC.Cell(line + incrementRowMMC, 8).Clear();
+            }
+
+            //worksheetMMC.DataType = XLDataType.Text;
+            //Ширина колонки по содержимому
+            worksheetMMC.Columns(1, 7).AdjustToContents(5.0, 100.0);
+            #region Объединение ячеек
+            worksheetMMC.Range("C1:D1").Row(1).Merge();
+            worksheetMMC.Range("E1:F1").Row(1).Merge();
+            worksheetMMC.Range("B1:B2").Column(1).Merge();
+            worksheetMMC.Range("G1:G2").Column(1).Merge();
+            #endregion
+            worksheetMMC.Columns(1, 7).Style.Alignment.SetHorizontal(XLAlignmentHorizontalValues.Center);
+            worksheetMMC.Columns(1, 7).Style.Alignment.SetVertical(XLAlignmentVerticalValues.Center);
+            #endregion
+
             try
             {
                 workbook.SaveAs($"{PathFolderAssembly}\\Отчёт.xlsx");
@@ -863,6 +973,27 @@ namespace PositionApplicability.ViewModels
             }
             Info = "Файл сохранен";
             
+        }
+        /// <summary>
+        /// Открыть файл отчёта
+        /// </summary>
+        [RelayCommand]
+        private void OpenExcel()
+        {
+            Info = "";
+            if (File.Exists($@"{PathFolderAssembly}\Отчёт.xlsx"))
+            {
+                var process = new Process();
+                process.StartInfo = new ProcessStartInfo($@"{PathFolderAssembly}\Отчёт.xlsx")
+                {
+                    UseShellExecute = true,
+                };
+                process.Start();
+            }
+            else
+            {
+                Info = $"Файл {$@"{PathFolderAssembly}\Отчёт.xlsx"} не найден. Сохраните отчёт.";
+            }
         }
 
         [RelayCommand]

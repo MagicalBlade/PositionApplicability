@@ -56,6 +56,7 @@
             </StackPanel>
             <StackPanel Orientation="Horizontal" HorizontalAlignment="Center">
                 <Button Content="Сохранить в Excel" HorizontalAlignment="Center" Padding="3" Margin="3"  Command="{Binding SaveExcelCommand}"/>
+                <Button Content="Открыть отчет" ToolTip="Открыть сохраненный в Excel отчет" HorizontalAlignment="Center" Padding="3" Margin="3"  Command="{Binding OpenExcelCommand}"/>
                 <Button Content="Журнал" HorizontalAlignment="Center" Padding="3" Margin="3" Command="{Binding OpenLogCommand}"/>
             </StackPanel>
         </StackPanel>
