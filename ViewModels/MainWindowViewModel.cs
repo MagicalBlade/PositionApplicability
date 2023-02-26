@@ -65,7 +65,12 @@ namespace PositionApplicability.ViewModels
         /// Данные по маркам для ММС
         /// </summary>
         [ObservableProperty]
-        private List<string[]> _marksforMMC = new List<string[]>();
+        private List<string[]> _marksforMMC = new();
+        /// <summary>
+        /// Данные позиций из деталировки
+        /// </summary>
+        [ObservableProperty]
+        private List<string[]> _posData = new();
 
         [ObservableProperty]
         [NotifyCanExecuteChangedFor(nameof(OpenLogCommand))]
@@ -756,6 +761,136 @@ namespace PositionApplicability.ViewModels
             }
         }
         #endregion
+
+
+        #region Получение данных позиций из деталировки
+        /// <summary>
+        /// Получение данных позиций из деталировки
+        /// </summary>
+        /// <param name="token"></param>
+        /// <returns></returns>
+        [RelayCommand(IncludeCancelCommand = true)]
+        private async Task GetPosData(CancellationToken token)
+        {
+            if (!Directory.Exists(PathFolderPos))
+            {
+                Info = "Не верный путь к деталям";
+                return;
+            }
+
+            await Task.Run(() => GetPosDataAsync(token));
+            OpenLogCommand.NotifyCanExecuteChanged();
+
+        }
+        private async Task GetPosDataAsync(CancellationToken token)
+        {
+            Log.Clear();
+            if (!Directory.Exists(PathFolderPos))
+            {
+                return;
+            }
+            Info = "Начало получение данных позиций";
+            PBFill_Value = 1;
+            SearchOption searchOptionFill;
+            if (IsAllDirectoryFill)
+            {
+                searchOptionFill = SearchOption.AllDirectories;
+            }
+            else
+            {
+                searchOptionFill = SearchOption.TopDirectoryOnly;
+            }
+            string[] filesDetailing = Directory.GetFiles(PathFolderPos, "*.cdw", searchOptionFill);
+            if (filesDetailing.Length == 0)
+            {
+                PBFill_Value = 0;
+                Info = "Не найдена деталировка";
+                return;
+            }
+            Type? kompasType = Type.GetTypeFromProgID("Kompas.Application.5", true);
+            if (kompasType == null)
+            {
+                Info = "Не удалось запустить компас";
+                return;
+            }
+            KompasObject? kompas = Activator.CreateInstance(kompasType) as KompasObject; //Запуск компаса
+            if (kompas == null)
+            {
+                Info = "Не удалось запустить компас";
+                return;
+            }
+            if (token.IsCancellationRequested)
+            {
+                kompas.Quit();
+                PBFill_Value = 0;
+                Info = "Получение данных позиций отменено";
+                return;
+            }
+            PBFill_Value = 10;
+            IApplication application = (IApplication)kompas.ksGetApplication7();
+            IDocuments documents = application.Documents;
+            foreach (string path in filesDetailing)
+            {
+                IDrawingDocument kompasDocument = (IDrawingDocument)documents.Open(path, false, false);
+                if (kompasDocument == null)
+                {
+                    PBFill_Value += 90 / filesDetailing.Length;
+                    Log.Add($"{path} - не удалось открыть");
+                    continue;
+                }
+                ILayoutSheets layoutSheets = kompasDocument.LayoutSheets;
+                ILayoutSheet layoutSheet = layoutSheets.ItemByNumber[1];
+                IStamp stamp = layoutSheet.Stamp;
+                IText text3 = stamp.Text[3];
+                string text3Str = text3.Str;
+                string pos = stamp.Text[2].Str.Split(" ")[^1];
+                string thickness = "";
+                string weight = stamp.Text[5].Str;
+                string steel = "";
+                if (text3Str != "")
+                {
+                    string[] profile = text3Str.Split("$dsm; ".ToCharArray(), StringSplitOptions.RemoveEmptyEntries);
+                    if (profile.Length > 4)
+                    {
+                        thickness = profile[1];
+                        steel = profile[4];
+                    }
+                }
+                PosData.Add(new string[]
+                {
+                    pos,
+                    thickness,
+                    weight,
+                    steel
+                });
+                //
+                kompasDocument.Save();
+                if (kompasDocument.Changed)
+                {
+                    Log.Add($"{path} - не удалось сохранить");
+                }
+                kompasDocument.Close(Kompas6Constants.DocumentCloseOptions.kdDoNotSaveChanges);
+                PBFill_Value += 90 / filesDetailing.Length;
+                if (token.IsCancellationRequested)
+                {
+                    kompas.Quit();
+                    PBFill_Value = 0;
+                    Info = "Получение данных позиций отменено";
+                    return;
+                }
+            }
+            kompas.Quit();
+            PBFill_Value = 100;
+            WriteLog();
+            Info = "Получение данных позиций завершено";
+            if (Log.Count > 0)
+            {
+                Info += ". Есть ошибки, посмотрите журнал.";
+            }
+        }
+        #endregion
+
+
         [RelayCommand]
         private void OpenTxT(string file)
         {
@@ -785,7 +920,7 @@ namespace PositionApplicability.ViewModels
                 Info = "Вначале извлеките позиции";
                 return;
             }
-            //PosList.Sort(ComparePosData);
+            PosList.Sort(ComparePosData);
             //Сортировка списка по номеру позиции
             static int ComparePosData(PosData x, PosData y)
             {
@@ -870,11 +1005,13 @@ namespace PositionApplicability.ViewModels
                         {
                             worksheetPos.Cell(i + incrementRow, 7).Style.Fill.BackgroundColor = XLColor.Red;
                         }
-                        worksheetPos.Cell(i + incrementRow, 1).SetValue(PosList[i].Pos);
+                        worksheetPos.Cell(i + incrementRow, 1).SetValue(PosList[i].Pos); //Номер позиции
+                        //Количество Таковских позиций
                         if (PosList[i].Mark[markIndex][2] != 0)
                         {
                             worksheetPos.Cell(i + incrementRow, 2).SetValue(PosList[i].Mark[markIndex][2]);
                         }
+                        //Количество наоборотовских позиций
                         if (PosList[i].Mark[markIndex][3] != 0)
                         {
                             worksheetPos.Cell(i + incrementRow, 3).SetValue(PosList[i].Mark[markIndex][3]);
@@ -888,6 +1025,34 @@ namespace PositionApplicability.ViewModels
                         worksheetPos.Cell(i + incrementRow, 10).SetValue(PosList[i].List); //Примечание
                         worksheetPos.Cell(i + incrementRow, 11).SetValue(PosList[i].Mark[markIndex][0]); //Название марки
                         worksheetPos.Cell(i + incrementRow, 12).SetValue(PosList[i].Mark[markIndex][5]); //Количество марок
+                        if (PosData.Count != 0)
+                        {
+                            foreach (string[] item in PosData)
+                            {
+                                if (item[0] == PosList[i].Pos)
+                                {
+                                    //Проверка на правильность заполнения спецификации по сравнению с деталировкой
+                                    //Толщина
+                                    if (item[1] != PosList[i].Mark[markIndex][6])
+                                    {
+                                        worksheetPos.Cell(i + incrementRow, 4).Style.Fill.BackgroundColor = XLColor.Red;
+                                        worksheetPos.Cell(i + incrementRow, 4).Style.Font.Underline = XLFontUnderlineValues.Single;
+                                    }
+                                    //Масса одной позиции
+                                    if (item[2] != $"{PosList[i].Mark[markIndex][1]}")
+                                    {
+                                        worksheetPos.Cell(i + incrementRow, 7).Style.Fill.BackgroundColor = XLColor.Red;
+                                        worksheetPos.Cell(i + incrementRow, 7).Style.Font.Underline = XLFontUnderlineValues.Single;
+                                    }
+                                    //Сталь
+                                    if (item[3] != PosList[i].Mark[markIndex][9])
+                                    {
+                                        worksheetPos.Cell(i + incrementRow, 9).Style.Fill.BackgroundColor = XLColor.Red;
+                                        worksheetPos.Cell(i + incrementRow, 9).Style.Font.Underline = XLFontUnderlineValues.Single;
+                                    }
+                                }
+                            }
+                        }
                         incrementRow++;
                     }
                     incrementRow--;
@@ -962,6 +1127,45 @@ namespace PositionApplicability.ViewModels
             worksheetMMC.Columns(1, 7).Style.Alignment.SetVertical(XLAlignmentVerticalValues.Center);
             #endregion
 
+            #region Лист "Деталировка"
+            if (PosData.Count != 0)
+            {
+                IXLWorksheet wsPosData = workbook.Worksheets.Add("Деталировка");
+                int incrementRowPosData = 2;
+                #region Формирование шапки листа
+                wsPosData.Cell(1, 1).SetValue("Поз.");
+                wsPosData.Cell(1, 2).SetValue("Толщина");
+                wsPosData.Cell(1, 3).SetValue("Масса ед.");
+                wsPosData.Cell(1, 4).SetValue("Сталь");
+                #endregion
+
+                for (int line = 0; line < PosData.Count; line++)
+                {
+                    wsPosData.Cell(line + incrementRowPosData, 1).SetValue(PosData[line][0]); //Номер позиции
+                    wsPosData.Cell(line + incrementRowPosData, 2).SetValue(PosData[line][1]); //Толщина
+                    wsPosData.Cell(line + incrementRowPosData, 3).SetValue(PosData[line][2]); //Вес
+                    wsPosData.Cell(line + incrementRowPosData, 4).SetValue(PosData[line][3]); //Материал
+
+                    /*
+                    var cellWithFormulaA1 = wsPosData.Cell(line + incrementRowPosData, 8);
+                    cellWithFormulaA1.FormulaA1 = $@"==IF(((C{line + incrementRowPosData}+D{line + incrementRowPosData})*E{line + incrementRowPosData})=F{line + incrementRowPosData}, True, False)";
+                    if (cellWithFormulaA1.Value.ToString() == "False")
+                    {
+                        wsPosData.Cell(line + incrementRowPosData, 6).Style.Fill.BackgroundColor = XLColor.Red;
+                    }
+                    wsPosData.Cell(line + incrementRowPosData, 8).Clear();
+                    */
+                }
+
+                //wsPosData.DataType = XLDataType.Text;
+                //Ширина колонки по содержимому
+                wsPosData.Columns(1, 7).AdjustToContents(5.0, 100.0);
+                wsPosData.Columns(1, 7).Style.Alignment.SetHorizontal(XLAlignmentHorizontalValues.Center);
+                wsPosData.Columns(1, 7).Style.Alignment.SetVertical(XLAlignmentVerticalValues.Center);
+            }
+
+            #endregion
+            
             try
             {
                 workbook.SaveAs($"{PathFolderAssembly}\\Отчёт.xlsx");
@@ -1014,6 +1218,7 @@ namespace PositionApplicability.ViewModels
         /// Открыть файл журнала
         /// </summary>
         /// <param name="log"></param>
+        
         [RelayCommand(CanExecute = nameof(CanOpenLog))]
         private void OpenLog()
         {

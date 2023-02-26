@@ -55,6 +55,10 @@
                 <Button Content="Данные" ToolTip="Открыть файл с данными шероховатости" HorizontalAlignment="Center" Padding="3" Margin="3"  Command="{Binding OpenTxTCommand}" CommandParameter="Resources\Шероховатость.txt"/>
             </StackPanel>
             <StackPanel Orientation="Horizontal" HorizontalAlignment="Center">
+                <Button Content="Данные из деталировки" ToolTip="Получить данные из деталировки" HorizontalAlignment="Center" Padding="3" Margin="3"  Command="{Binding GetPosDataCommand}"/>
+                <Button Content="Отмена" HorizontalAlignment="Center" Padding="3" Margin="3"  Command="{Binding GetPosDataCancelCommand}"/>
+            </StackPanel>
+            <StackPanel Orientation="Horizontal" HorizontalAlignment="Center">
                 <Button Content="Сохранить в Excel" HorizontalAlignment="Center" Padding="3" Margin="3"  Command="{Binding SaveExcelCommand}"/>
                 <Button Content="Открыть отчет" ToolTip="Открыть сохраненный в Excel отчет" HorizontalAlignment="Center" Padding="3" Margin="3"  Command="{Binding OpenExcelCommand}"/>
                 <Button Content="Журнал" HorizontalAlignment="Center" Padding="3" Margin="3" Command="{Binding OpenLogCommand}"/>
