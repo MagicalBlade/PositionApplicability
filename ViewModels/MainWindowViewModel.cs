@@ -864,12 +864,6 @@ namespace PositionApplicability.ViewModels
                     weight,
                     steel
                 });
-                //
-                kompasDocument.Save();
-                if (kompasDocument.Changed)
-                {
-                    Log.Add($"{path} - не удалось сохранить");
-                }
                 kompasDocument.Close(Kompas6Constants.DocumentCloseOptions.kdDoNotSaveChanges);
                 PBFill_Value += 90 / filesDetailing.Length;
                 if (token.IsCancellationRequested)
