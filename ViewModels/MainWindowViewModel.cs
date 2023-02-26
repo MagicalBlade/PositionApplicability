@@ -785,6 +785,7 @@ namespace PositionApplicability.ViewModels
         private async Task GetPosDataAsync(CancellationToken token)
         {
             Log.Clear();
+            PosData.Clear();
             if (!Directory.Exists(PathFolderPos))
             {
                 return;
