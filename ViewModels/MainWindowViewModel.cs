@@ -915,7 +915,7 @@ namespace PositionApplicability.ViewModels
                 Info = "Вначале извлеките позиции";
                 return;
             }
-            PosList.Sort(ComparePosData);
+            //PosList.Sort(ComparePosData);
             //Сортировка списка по номеру позиции
             static int ComparePosData(PosData x, PosData y)
             {
@@ -934,8 +934,18 @@ namespace PositionApplicability.ViewModels
                 {
                     return 1;
                 }
-                double xd = double.Parse(x.Pos.Replace(".", ","));
-                double yd = double.Parse(y.Pos.Replace(".", ","));
+                double xd;
+                double yd;
+                try
+                {
+                    xd = double.Parse(x.Pos.Replace(".", ","));
+                    yd = double.Parse(y.Pos.Replace(".", ","));
+
+                }
+                catch (Exception)
+                {
+                    return -1;
+                }
                 if (xd > yd)
                 {
                     return 1;
@@ -1101,12 +1111,15 @@ namespace PositionApplicability.ViewModels
                 worksheetMMC.Cell(line + incrementRowMMC, 6).SetValue(MarksforMMC[line][5]); //Общая масса
                 worksheetMMC.Cell(line + incrementRowMMC, 7).SetValue(MarksforMMC[line][6]); //Номер листа
                 var cellWithFormulaA1 = worksheetMMC.Cell(line + incrementRowMMC, 8);
-                cellWithFormulaA1.FormulaA1 = $@"==IF(((C{line + incrementRowMMC}+D{line + incrementRowMMC})*E{line + incrementRowMMC})=F{line + incrementRowMMC}, True, False)";
+                var cellWithFormulaA2 = worksheetMMC.Cell(line + incrementRowMMC, 9);
+                cellWithFormulaA2.FormulaA1 = $@"=Round((C{line + incrementRowMMC}+D{line + incrementRowMMC})*E{line + incrementRowMMC}, 5)";
+                cellWithFormulaA1.FormulaA1 = $@"=IF(I{line + incrementRowMMC}=F{line + incrementRowMMC}, True, False)";
                 if (cellWithFormulaA1.Value.ToString() == "False")
                 {
                     worksheetMMC.Cell(line + incrementRowMMC, 6).Style.Fill.BackgroundColor = XLColor.Red;
                 }
                 worksheetMMC.Cell(line + incrementRowMMC, 8).Clear();
+                worksheetMMC.Cell(line + incrementRowMMC, 9).Clear();
             }
 
             //worksheetMMC.DataType = XLDataType.Text;
@@ -1140,16 +1153,6 @@ namespace PositionApplicability.ViewModels
                     wsPosData.Cell(line + incrementRowPosData, 2).SetValue(PosData[line][1]); //Толщина
                     wsPosData.Cell(line + incrementRowPosData, 3).SetValue(PosData[line][2]); //Вес
                     wsPosData.Cell(line + incrementRowPosData, 4).SetValue(PosData[line][3]); //Материал
-
-                    /*
-                    var cellWithFormulaA1 = wsPosData.Cell(line + incrementRowPosData, 8);
-                    cellWithFormulaA1.FormulaA1 = $@"==IF(((C{line + incrementRowPosData}+D{line + incrementRowPosData})*E{line + incrementRowPosData})=F{line + incrementRowPosData}, True, False)";
-                    if (cellWithFormulaA1.Value.ToString() == "False")
-                    {
-                        wsPosData.Cell(line + incrementRowPosData, 6).Style.Fill.BackgroundColor = XLColor.Red;
-                    }
-                    wsPosData.Cell(line + incrementRowPosData, 8).Clear();
-                    */
                 }
 
                 //wsPosData.DataType = XLDataType.Text;
