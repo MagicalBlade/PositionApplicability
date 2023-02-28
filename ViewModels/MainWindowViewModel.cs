@@ -844,7 +844,7 @@ namespace PositionApplicability.ViewModels
                 IStamp stamp = layoutSheet.Stamp;
                 IText text3 = stamp.Text[3];
                 string text3Str = text3.Str;
-                string pos = stamp.Text[2].Str.Split(" ")[^1];
+                string pos = stamp.Text[2].Str.Split(" ", StringSplitOptions.RemoveEmptyEntries)[^1];
                 string thickness = "";
                 string weight = stamp.Text[5].Str;
                 string steel = "";
