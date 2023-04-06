@@ -215,13 +215,20 @@ namespace PositionApplicability.ViewModels
                 {
                     for (int row = 3; row < specTable.RowsCount; row++)
                     {
-                        if (((IText)specTable.Cell[row, 1].Text).Str == "" && ((IText)specTable.Cell[row, 2].Text).Str == "" && ((IText)specTable.Cell[row, 0].Text).Str != "")
+                        if (((IText)specTable.Cell[row, 1].Text).Str == "" && ((IText)specTable.Cell[row, 2].Text).Str == "" 
+                            && ((IText)specTable.Cell[row, 0].Text).Str != ""
+                            && ((IText)specTable.Cell[row, 3].Text).Str != "")
                         {
                             Log.Add($"{mark} - поз.{((IText)specTable.Cell[row, 0].Text).Str} нет количества позиции");
                             continue;
                         }
                         // TODO : Добавить запись в журнал что нет количества позиций
-                        if (((IText)specTable.Cell[row, 0].Text).Str != "")
+                        if (((IText)specTable.Cell[row, 0].Text).Str != "" && 
+                            (((IText)specTable.Cell[row, 3].Text).Str != "" ||
+                            ((IText)specTable.Cell[row, 4].Text).Str != "" ||
+                            ((IText)specTable.Cell[row, 5].Text).Str != "" ||
+                            ((IText)specTable.Cell[row, 6].Text).Str != "" ||
+                            ((IText)specTable.Cell[row, 8].Text).Str != ""))
                         {
                             double weight = 0;
                             int qantityT = 0;
