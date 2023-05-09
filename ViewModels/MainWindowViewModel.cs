@@ -75,7 +75,15 @@ namespace PositionApplicability.ViewModels
         [ObservableProperty]
         [NotifyCanExecuteChangedFor(nameof(OpenLogCommand))]
         private List<string> _log = new();
-        
+
+        #region Нумерация сборок
+        /// <summary>
+        /// Стартовый номер для нумерации
+        /// </summary>
+        [ObservableProperty]
+        private int _startListNumber = 1;
+        #endregion
+
 
 
         #region Извлечение позиций
@@ -895,6 +903,91 @@ namespace PositionApplicability.ViewModels
             {
                 Info += ". Есть ошибки, посмотрите журнал.";
             }
+        }
+        #endregion
+
+        #region Нумерация листов сборок
+        [RelayCommand(IncludeCancelCommand = true)]
+        private async Task NumberListAssemble(CancellationToken token)
+        {
+            if (!Directory.Exists(PathFolderAssembly))
+            {
+                Info = "Не верный путь к сборкам";
+                return;
+            }
+            Log.Clear();
+            Info = "Началась нумерация листов сборок";
+            PBExtraction_Value = 1;
+            string[] assemblyFiles;
+            if (IsAllDirectoryExtraction)
+            {
+                assemblyFiles = Directory.GetFiles(PathFolderAssembly, "*.cdw", SearchOption.AllDirectories);
+            }
+            else
+            {
+                assemblyFiles = Directory.GetFiles(PathFolderAssembly, "*.cdw", SearchOption.TopDirectoryOnly);
+            }
+            await Task.Run(() =>
+            {
+
+                Type? kompasType = Type.GetTypeFromProgID("Kompas.Application.5", true);
+                PBExtraction_Value = 10;
+                if (kompasType == null) return;
+                KompasObject? kompas = Activator.CreateInstance(kompasType) as KompasObject; //Запуск компаса
+                if (kompas == null) return;
+                if (token.IsCancellationRequested)
+                {
+                    kompas.Quit();
+                    PBExtraction_Value = 0;
+                    Info = "Нумерация отменена";
+                    return;
+                }
+                IApplication application = (IApplication)kompas.ksGetApplication7();
+                IDocuments documents = application.Documents;
+                foreach (string pathfile in assemblyFiles)
+                {
+                    IKompasDocument2D kompasDocuments2D = (IKompasDocument2D)documents.Open(pathfile, false, false);
+                    if (kompasDocuments2D == null)
+                    {
+                        Log.Add($"{pathfile} - не удалось открыть чертеж");
+                        continue;
+                    }
+
+                    ILayoutSheets layoutSheets = kompasDocuments2D.LayoutSheets;
+                    foreach (ILayoutSheet layoutSheet in layoutSheets)
+                    {
+                        IStamp stamp = layoutSheet.Stamp;
+                        stamp.Text[16001].Str = StartListNumber.ToString(); //Текст из ячейки "Лист"
+                        StartListNumber++;
+                        stamp.Update();
+                        break;
+                    }
+                    kompasDocuments2D.Save();
+                    if (kompasDocuments2D.Changed)
+                    {
+                        Log.Add($"{pathfile} - не удалось сохранить чертеж ({StartListNumber} - его номер листа)");
+                    }
+                    if (token.IsCancellationRequested)
+                    {
+                        kompas.Quit();
+                        PBExtraction_Value = 0;
+                        Info = "Извлечение отменено";
+                        return;
+                    }
+                    PBExtraction_Value += 90 / assemblyFiles.Length;
+                }
+                kompas.Quit();
+            PBExtraction_Value = 100;
+            WriteLog();
+            Info = "Нумерация закончена";
+            if (Log.Count > 0)
+            {
+                Info += ". Есть ошибки, посмотрите журнал.";
+            }
+            }, token);
+
+            OpenLogCommand.NotifyCanExecuteChanged();
+
         }
         #endregion
 

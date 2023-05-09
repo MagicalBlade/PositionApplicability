@@ -9,6 +9,26 @@
         mc:Ignorable="d"
         Title="Применяемость позиций" MinHeight="400" MinWidth="373" Height="{Binding HeightWindow, Mode=TwoWay}" Width="{Binding WidthWindow, Mode=TwoWay}"
         WindowStartupLocation="CenterScreen" WindowStyle="SingleBorderWindow">
+    <Window.Resources>
+        <Style TargetType="TextBox">
+            <Setter Property="Margin" Value="3"/>
+            <Setter Property="Margin" Value="3"/>
+            <Setter Property="VerticalAlignment" Value="Center"/>
+            <Setter Property="VerticalContentAlignment" Value="Center"/>
+        </Style>
+        <Style TargetType="TextBlock">
+            <Setter Property="Margin" Value="3"/>
+            <Setter Property="Margin" Value="3"/>
+            <Setter Property="VerticalAlignment" Value="Center"/>
+        </Style>
+        <Style TargetType="Button">
+            <Setter Property="Margin" Value="3"/>
+            <Setter Property="Margin" Value="3"/>
+            <Setter Property="VerticalAlignment" Value="Center"/>
+            <Setter Property="HorizontalAlignment" Value="Center"/>
+            <Setter Property="HorizontalContentAlignment" Value="Center"/>
+        </Style>
+    </Window.Resources>
     <Window.DataContext>
         <viewmodels:MainWindowViewModel/>
     </Window.DataContext>
@@ -21,50 +41,73 @@
     <Grid>
         <Grid.RowDefinitions>
             <RowDefinition/>
+            <RowDefinition Height="40"/>
             <RowDefinition Height="25"/>
         </Grid.RowDefinitions>
-        <StackPanel Grid.Row="0" Orientation="Vertical">
-            <DockPanel>
-                <Button Content="Указать путь к сборкам:" Padding="3" Margin="3"  Command="{Binding OpenFolderDialogAssemblyCommand}"/>
-                <TextBox Height="25" Padding="3" Margin="3" Text="{Binding PathFolderAssembly}"/>
-            </DockPanel>
-            <DockPanel>
-                <Label Content="Текст для поиска спецификации:" Padding="3" Margin="3"/>
-                <TextBox ToolTip="Укажите характерные слова, по которым можно будет найти спецификацию" Height="25" Padding="3" Margin="3" Text="{Binding StrSearchTableAssembly}"/>
-            </DockPanel>
-            <ProgressBar Height="25" Value = "{Binding PBExtraction_Value}"/>
-            <StackPanel Orientation="Horizontal" HorizontalAlignment="Center">
-                <CheckBox Content="В подпапках" IsChecked="{Binding IsAllDirectoryExtraction}" VerticalContentAlignment="Center" VerticalAlignment="Center" Padding="3" Margin="3"/>
-                <Button Content="Извлечение позиций" HorizontalAlignment="Center" Padding="3" Margin="3" Command="{Binding ExtractionPositionsCommand}"/>
-                <Button Content="Отмена" HorizontalAlignment="Center" Padding="3" Margin="3" Command="{Binding ExtractionPositionsCancelCommand}"/>
-            </StackPanel>
-            <DockPanel>
-                <Button Content="Указать путь к деталям:" HorizontalAlignment="Center" Padding="3" Margin="3"  Command="{Binding OpenFolderDialogPosCommand}"/>
-                <TextBox Height="25" Padding="3" Margin="3" Text="{Binding PathFolderPos}"/>
-            </DockPanel>
-            <DockPanel/>
-            <ProgressBar Height="25" Value = "{Binding PBFill_Value}"/>
-            <StackPanel Orientation="Horizontal" HorizontalAlignment="Center">
-                <CheckBox Content="В подпапках" IsChecked="{Binding IsAllDirectoryFill}" VerticalContentAlignment="Center" VerticalAlignment="Center" Padding="3" Margin="3"/>
-                <Button Content="Заполнить деталировку" HorizontalAlignment="Center" Padding="3" Margin="3"  Command="{Binding FillPosCommand}"/>
-                <Button Content="Отмена" HorizontalAlignment="Center" Padding="3" Margin="3"  Command="{Binding FillPosCancelCommand}"/>
-            </StackPanel>
-            <StackPanel Orientation="Horizontal" HorizontalAlignment="Center">
-                <Button Content="Шероховатость" ToolTip="Заполнить шероховатость в деталировке" HorizontalAlignment="Center" Padding="3" Margin="3"  Command="{Binding SpecRoughCommand}"/>
-                <Button Content="Отмена" HorizontalAlignment="Center" Padding="3" Margin="3"  Command="{Binding SpecRoughCancelCommand}"/>
-                <Button Content="Данные" ToolTip="Открыть файл с данными шероховатости" HorizontalAlignment="Center" Padding="3" Margin="3"  Command="{Binding OpenTxTCommand}" CommandParameter="Resources\Шероховатость.txt"/>
-            </StackPanel>
-            <StackPanel Orientation="Horizontal" HorizontalAlignment="Center">
-                <Button Content="Данные из деталировки" ToolTip="Получить данные из деталировки" HorizontalAlignment="Center" Padding="3" Margin="3"  Command="{Binding GetPosDataCommand}"/>
-                <Button Content="Отмена" HorizontalAlignment="Center" Padding="3" Margin="3"  Command="{Binding GetPosDataCancelCommand}"/>
-            </StackPanel>
-            <StackPanel Orientation="Horizontal" HorizontalAlignment="Center">
-                <Button Content="Сохранить в Excel" HorizontalAlignment="Center" Padding="3" Margin="3"  Command="{Binding SaveExcelCommand}"/>
-                <Button Content="Открыть отчет" ToolTip="Открыть сохраненный в Excel отчет" HorizontalAlignment="Center" Padding="3" Margin="3"  Command="{Binding OpenExcelCommand}"/>
-                <Button Content="Журнал" HorizontalAlignment="Center" Padding="3" Margin="3" Command="{Binding OpenLogCommand}"/>
-            </StackPanel>
-        </StackPanel>
-        <StatusBar Grid.Row="1">
+        <TabControl>
+            <TabItem Header="Основное">
+                
+                <StackPanel Grid.Row="0" Orientation="Vertical">
+                    <DockPanel>
+                        <Button Content="Указать путь к сборкам:" Padding="3" Margin="3"  Command="{Binding OpenFolderDialogAssemblyCommand}"/>
+                        <TextBox Height="25" Padding="3" Margin="3" Text="{Binding PathFolderAssembly}"/>
+                    </DockPanel>
+                    <DockPanel>
+                        <Label Content="Текст для поиска спецификации:" Padding="3" Margin="3"/>
+                        <TextBox ToolTip="Укажите характерные слова, по которым можно будет найти спецификацию" Height="25" Padding="3" Margin="3" Text="{Binding StrSearchTableAssembly}"/>
+                    </DockPanel>
+                    <ProgressBar Height="25" Value = "{Binding PBExtraction_Value}"/>
+                    <StackPanel Orientation="Horizontal" HorizontalAlignment="Center">
+                        <CheckBox Content="В подпапках" IsChecked="{Binding IsAllDirectoryExtraction}" VerticalContentAlignment="Center" VerticalAlignment="Center" Padding="3" Margin="3"/>
+                        <Button Content="Извлечение позиций" HorizontalAlignment="Center" Padding="3" Margin="3" Command="{Binding ExtractionPositionsCommand}"/>
+                        <Button Content="Отмена" HorizontalAlignment="Center" Padding="3" Margin="3" Command="{Binding ExtractionPositionsCancelCommand}"/>
+                    </StackPanel>
+                    <DockPanel>
+                        <Button Content="Указать путь к деталям:" HorizontalAlignment="Center" Padding="3" Margin="3"  Command="{Binding OpenFolderDialogPosCommand}"/>
+                        <TextBox Height="25" Padding="3" Margin="3" Text="{Binding PathFolderPos}"/>
+                    </DockPanel>
+                    <DockPanel/>
+                    <ProgressBar Height="25" Value = "{Binding PBFill_Value}"/>
+                    <StackPanel Orientation="Horizontal" HorizontalAlignment="Center">
+                        <CheckBox Content="В подпапках" IsChecked="{Binding IsAllDirectoryFill}" VerticalContentAlignment="Center" VerticalAlignment="Center" Padding="3" Margin="3"/>
+                        <Button Content="Заполнить деталировку" HorizontalAlignment="Center" Padding="3" Margin="3"  Command="{Binding FillPosCommand}"/>
+                        <Button Content="Отмена" HorizontalAlignment="Center" Padding="3" Margin="3"  Command="{Binding FillPosCancelCommand}"/>
+                    </StackPanel>
+                    <StackPanel Orientation="Horizontal" HorizontalAlignment="Center">
+                        <Button Content="Шероховатость" ToolTip="Заполнить шероховатость в деталировке" HorizontalAlignment="Center" Padding="3" Margin="3"  Command="{Binding SpecRoughCommand}"/>
+                        <Button Content="Отмена" HorizontalAlignment="Center" Padding="3" Margin="3"  Command="{Binding SpecRoughCancelCommand}"/>
+                        <Button Content="Данные" ToolTip="Открыть файл с данными шероховатости" HorizontalAlignment="Center" Padding="3" Margin="3"  Command="{Binding OpenTxTCommand}" CommandParameter="Resources\Шероховатость.txt"/>
+                    </StackPanel>
+                    <StackPanel Orientation="Horizontal" HorizontalAlignment="Center">
+                        <Button Content="Данные из деталировки" ToolTip="Получить данные из деталировки" HorizontalAlignment="Center" Padding="3" Margin="3"  Command="{Binding GetPosDataCommand}"/>
+                        <Button Content="Отмена" HorizontalAlignment="Center" Padding="3" Margin="3"  Command="{Binding GetPosDataCancelCommand}"/>
+                    </StackPanel>
+                    <StackPanel Orientation="Horizontal" HorizontalAlignment="Center">
+                        <Button Content="Сохранить в Excel" HorizontalAlignment="Center" Padding="3" Margin="3"  Command="{Binding SaveExcelCommand}"/>
+                        <Button Content="Открыть отчет" ToolTip="Открыть сохраненный в Excel отчет" HorizontalAlignment="Center" Padding="3" Margin="3"  Command="{Binding OpenExcelCommand}"/>
+                    </StackPanel>
+                </StackPanel>
+                
+            </TabItem>
+            <TabItem Header="Нумерация листов сборок">
+                <StackPanel Grid.Row="0" Orientation="Vertical">
+                    <DockPanel>
+                        <Button Content="Указать путь к сборкам:" Padding="3" Margin="3"  Command="{Binding OpenFolderDialogAssemblyCommand}"/>
+                        <TextBox Height="25" Padding="3" Margin="3" Text="{Binding PathFolderAssembly}"/>
+                    </DockPanel>
+                    <ProgressBar Height="25" Value = "{Binding PBExtraction_Value}"/>
+                    <StackPanel Orientation="Horizontal" HorizontalAlignment="Center">
+                        <CheckBox Content="В подпапках" IsChecked="{Binding IsAllDirectoryExtraction}" VerticalContentAlignment="Center" VerticalAlignment="Center" Padding="3" Margin="3"/>
+                        <TextBlock Text="Стартовый номер"/>
+                        <TextBox Text="{Binding StartListNumber}" Height="25" Width="70"/>
+                        <Button Content="Нумеровать" Padding="5,5" Command="{Binding NumberListAssembleCommand}"/>
+                        <Button Content="Отмена" HorizontalAlignment="Center" Padding="3" Margin="3" Command="{Binding NumberListAssembleCancelCommand}"/>
+                    </StackPanel>
+                </StackPanel>
+            </TabItem>
+        </TabControl>
+        <Button Grid.Row="1" Content="Журнал" Padding="5,5" Margin="10,0" HorizontalAlignment="Right" Command="{Binding OpenLogCommand}"/>
+        <StatusBar Grid.Row="2">
             <TextBlock Text="{Binding Info}"/>
         </StatusBar>
     </Grid>
