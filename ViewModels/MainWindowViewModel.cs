@@ -440,7 +440,7 @@ namespace PositionApplicability.ViewModels
             IDocuments documents = application.Documents;
             foreach (PosData pos in PosList)
             {
-                Regex re = new Regex($@"поз.*\D{pos.Pos}\D.*cdw", RegexOptions.IgnoreCase);
+                Regex re = new Regex($@"поз\.\D*{pos.Pos}([^\d\.]*|[^\d\.].*|\.\D*|\.\D.*)\.cdw", RegexOptions.IgnoreCase);
                 string[] path = Directory.GetFiles(PathFolderPos, $"*поз*{pos.Pos}*.cdw", searchOptionFill)
                     .Where(path => re.IsMatch(path))
                     .ToArray();
