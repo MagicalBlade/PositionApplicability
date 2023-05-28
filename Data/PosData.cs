@@ -31,12 +31,6 @@ namespace PositionApplicability.Data
         public string? TotalMass { get => _totalMass; set => _totalMass = value; }
         private string? _totalMass;
         /// <summary>
-        /// Номер листа чертежа
-        /// </summary>
-        public string? List { get => _list; set => _list = value; }
-
-        private string? _list;
-        /// <summary>
         /// Есть ошибка в заполнении толщины?
         /// </summary>
         public bool IsErrorThickness { get => _isErrorThickness; set => _isErrorThickness = value; }
@@ -67,12 +61,11 @@ namespace PositionApplicability.Data
         public PosData(ITable table, int row, string nameMark, int markcount, double weight, double qantityT, double qantityN, double totalWeight)
         {
             Pos = ((IText)table.Cell[row, 0].Text).Str;
-            List = ((IText)table.Cell[row, 9].Text).Str;
             this.AddMark(table, row, nameMark, markcount, weight, qantityT, qantityN, totalWeight);
         }
         public bool AddMark(ITable table, int row, string nameMark, int markcount, double weight, double qantityT, double qantityN, double totalWeight)
         {
-            Mark.Add(new dynamic[10]
+            Mark.Add(new dynamic[11]
             {
                 nameMark,
                 weight, //Масса одной позиции
@@ -84,6 +77,8 @@ namespace PositionApplicability.Data
                 ((IText)table.Cell[row, 4].Text).Str, // Ширина
                 ((IText)table.Cell[row, 5].Text).Str, // Длина
                 ((IText)table.Cell[row, 8].Text).Str, // Сталь
+                ((IText)table.Cell[row, 9].Text).Str, // Примечание
+
             });
             return true;
         }

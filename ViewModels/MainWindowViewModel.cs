@@ -1133,7 +1133,7 @@ namespace PositionApplicability.ViewModels
                         worksheetPos.Cell(i + incrementRow, 7).SetValue(PosList[i].Mark[markIndex][1]); //Масса одной позиции
                         worksheetPos.Cell(i + incrementRow, 8).SetValue(PosList[i].Mark[markIndex][4]); //Общая масса
                         worksheetPos.Cell(i + incrementRow, 9).SetValue(PosList[i].Mark[markIndex][9]); //Сталь
-                        worksheetPos.Cell(i + incrementRow, 10).SetValue(PosList[i].List); //Примечание
+                        worksheetPos.Cell(i + incrementRow, 10).SetValue(PosList[i].Mark[markIndex][10]); //Примечание
                         worksheetPos.Cell(i + incrementRow, 11).SetValue(PosList[i].Mark[markIndex][0]); //Название марки
                         worksheetPos.Cell(i + incrementRow, 12).SetValue(PosList[i].Mark[markIndex][5]); //Количество марок
                         if (PosData.Count != 0)
