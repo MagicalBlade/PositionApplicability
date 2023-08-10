@@ -2,6 +2,7 @@
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using Kompas6API5;
+using Kompas6Constants;
 using KompasAPI7;
 using PositionApplicability.Data;
 using System;
@@ -323,6 +324,25 @@ namespace PositionApplicability.ViewModels
                         }
                     }
                 }
+
+                //Поиск максимальной длины марки
+                List<double> dimensionValue = new List<double>();
+                foreach (IView view in views)
+                {
+                    ISymbols2DContainer symbols2DContainer = (ISymbols2DContainer)view;
+                    ILineDimensions lineDimensions = symbols2DContainer.LineDimensions;
+                    foreach (ILineDimension lineDimension in lineDimensions)
+                    {
+                        IDimensionText dimensionText = (IDimensionText)lineDimension;
+                        if (lineDimension.Orientation == ksLineDimensionOrientationEnum.ksLinDHorizontal)
+                        {
+                            dimensionValue.Add(Math.Round(dimensionText.NominalValue, 0));
+                        }
+                    }
+                }
+                if(dimensionValue.Count == 0) { dimensionValue.Add(0); }
+
+
                 if (!foundTableAssemble)
                 {
                     Log.Add($"{kompasDocuments2D.Name} - спецификация не соответствует формату или не найдена");
@@ -341,7 +361,7 @@ namespace PositionApplicability.ViewModels
                 }
 
                 //Подготовка данных по маркам для ММС
-                MarksforMMC.Add(new string[7] 
+                MarksforMMC.Add(new string[8] 
                 {
                     mark,
                     markName,
@@ -349,7 +369,8 @@ namespace PositionApplicability.ViewModels
                     markCountN.ToString(),
                     markWeight,
                     markTotalWeight,
-                    markSheet
+                    markSheet,
+                    dimensionValue.Max().ToString()
                 });
 
                 PBExtraction_Value += 90 / assemblyFiles.Length;
@@ -1194,6 +1215,7 @@ namespace PositionApplicability.ViewModels
             worksheetMMC.Cell(1, 3).SetValue("Кол-во");
             worksheetMMC.Cell(1, 5).SetValue("Масса, кг");
             worksheetMMC.Cell(1, 7).SetValue("№ черт.");
+            worksheetMMC.Cell(1, 8).SetValue("Длина");
             worksheetMMC.Cell(2, 1).SetValue("марка");
             worksheetMMC.Cell(2, 3).SetValue("т");
             worksheetMMC.Cell(2, 4).SetValue("н");
@@ -1226,19 +1248,22 @@ namespace PositionApplicability.ViewModels
                 }
                 worksheetMMC.Cell(line + incrementRowMMC, 8).Clear();
                 worksheetMMC.Cell(line + incrementRowMMC, 9).Clear();
+
+                worksheetMMC.Cell(line + incrementRowMMC, 8).SetValue(MarksforMMC[line][7]); //Длина марки
             }
 
             //worksheetMMC.DataType = XLDataType.Text;
             //Ширина колонки по содержимому
-            worksheetMMC.Columns(1, 7).AdjustToContents(5.0, 100.0);
+            worksheetMMC.Columns(1, 8).AdjustToContents(5.0, 100.0);
             #region Объединение ячеек
             worksheetMMC.Range("C1:D1").Row(1).Merge();
             worksheetMMC.Range("E1:F1").Row(1).Merge();
             worksheetMMC.Range("B1:B2").Column(1).Merge();
             worksheetMMC.Range("G1:G2").Column(1).Merge();
+            worksheetMMC.Range("H1:H2").Column(1).Merge();
             #endregion
-            worksheetMMC.Columns(1, 7).Style.Alignment.SetHorizontal(XLAlignmentHorizontalValues.Center);
-            worksheetMMC.Columns(1, 7).Style.Alignment.SetVertical(XLAlignmentVerticalValues.Center);
+            worksheetMMC.Columns(1, 8).Style.Alignment.SetHorizontal(XLAlignmentHorizontalValues.Center);
+            worksheetMMC.Columns(1, 8).Style.Alignment.SetVertical(XLAlignmentVerticalValues.Center);
             #endregion
 
             #region Лист "Деталировка"
