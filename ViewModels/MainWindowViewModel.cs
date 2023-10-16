@@ -890,13 +890,24 @@ namespace PositionApplicability.ViewModels
                 string thickness = "";
                 string weight = stamp.Text[5].Str;
                 string steel = "";
+                string gostlist = "";
+                string goststeel = "";
                 if (text3Str != "")
                 {
                     string[] profile = text3Str.Split("$dsm; ".ToCharArray(), StringSplitOptions.RemoveEmptyEntries);
                     if (profile.Length > 4)
                     {
                         thickness = profile[1];
+                        gostlist = profile[3];
+                    }
+                    if (profile.Length > 6)
+                    {
                         steel = profile[4];
+                        goststeel = profile[6];
+                    }
+                    if (profile.Length > 7)
+                    {
+                        goststeel += $" {profile[7]}";
                     }
                 }
                 PosData.Add(new string[]
@@ -904,7 +915,9 @@ namespace PositionApplicability.ViewModels
                     pos,
                     thickness,
                     weight,
-                    steel
+                    steel,
+                    gostlist,
+                    goststeel
                 });
                 kompasDocument.Close(Kompas6Constants.DocumentCloseOptions.kdDoNotSaveChanges);
                 PBFill_Value += 90 / filesDetailing.Length;
@@ -1276,6 +1289,8 @@ namespace PositionApplicability.ViewModels
                 wsPosData.Cell(1, 2).SetValue("Толщина");
                 wsPosData.Cell(1, 3).SetValue("Масса ед.");
                 wsPosData.Cell(1, 4).SetValue("Сталь");
+                wsPosData.Cell(1, 5).SetValue("ГОСТ профиль");
+                wsPosData.Cell(1, 6).SetValue("ГОСТ Сталь");
                 #endregion
 
                 for (int line = 0; line < PosData.Count; line++)
@@ -1284,6 +1299,8 @@ namespace PositionApplicability.ViewModels
                     wsPosData.Cell(line + incrementRowPosData, 2).SetValue(PosData[line][1]); //Толщина
                     wsPosData.Cell(line + incrementRowPosData, 3).SetValue(PosData[line][2]); //Вес
                     wsPosData.Cell(line + incrementRowPosData, 4).SetValue(PosData[line][3]); //Материал
+                    wsPosData.Cell(line + incrementRowPosData, 5).SetValue(PosData[line][4]); //ГОСТ на лист
+                    wsPosData.Cell(line + incrementRowPosData, 6).SetValue(PosData[line][5]); //ГОСТ на сталь
                 }
 
                 //wsPosData.DataType = XLDataType.Text;
