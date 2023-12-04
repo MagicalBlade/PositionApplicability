@@ -882,8 +882,18 @@ namespace PositionApplicability.ViewModels
                     continue;
                 }
                 ILayoutSheets layoutSheets = kompasDocument.LayoutSheets;
-                ILayoutSheet layoutSheet = layoutSheets.ItemByNumber[1];
-                IStamp stamp = layoutSheet.Stamp;
+                IStamp stamp = null;
+                foreach (ILayoutSheet layoutSheet in layoutSheets)
+                {
+                    stamp = layoutSheet.Stamp;
+                    break;
+                }
+                if (stamp == null)
+                {
+                    PBFill_Value += 90 / filesDetailing.Length;
+                    Log.Add($"{path} - не удалось найти лист. старый документ");
+                    continue;
+                }
                 IText text3 = stamp.Text[3];
                 string text3Str = text3.Str;
                 string pos = stamp.Text[2].Str.Split(" ", StringSplitOptions.RemoveEmptyEntries)[^1];
