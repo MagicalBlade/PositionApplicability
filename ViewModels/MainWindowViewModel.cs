@@ -1116,13 +1116,14 @@ namespace PositionApplicability.ViewModels
                         profile = stampcell3str[..stampcell3str.IndexOf("$")].Trim();
                         if (splitsemicolon.Length == 2)
                         {
-                            thickness = splitsemicolon[0][splitsemicolon[0].IndexOf(" ")..splitsemicolon[0].IndexOf("ГОСТ")].Trim();
+                            thickness = splitsemicolon[0][(splitsemicolon[0].IndexOf("$")+2)..splitsemicolon[0].IndexOf("ГОСТ")].Trim();
                             gostProfile = splitsemicolon[0][splitsemicolon[0].IndexOf("ГОСТ")..].Trim();
                             steel = splitsemicolon[1][..splitsemicolon[1].IndexOf(" ")].Trim();
                             gostSteel = splitsemicolon[1][splitsemicolon[1].IndexOf(" ")..].Trim();
                         }
+
+                        #region Поиск и проверка данных
                         bool isFind = false;
-                        //Поиск и проверка данных
                         if (ReplacingTextinStampData.IsProfile)
                         {
                             if (profile == ReplacingTextinStampData.ProfileFind)
@@ -1162,12 +1163,13 @@ namespace PositionApplicability.ViewModels
                                 gostSteel = ReplacingTextinStampData.GostSteelReplace;
                                 isFind = true;
                             }
-                        }
+                        } 
+                        #endregion
 
                         //Формирование и запись данных в штамп
                         if (isFind)
                         {
-                            stamp.Text[3].Str = $"{profile}$dm {thickness} {gostProfile}; {steel} {gostSteel}$";
+                            stamp.Text[3].Str = $"{profile}$dm{thickness} {gostProfile};{steel} {gostSteel}$";
                             foreach (ITextLine textLine in stamp.Text[3].TextLines)
                             {
                                 foreach (ITextItem item in textLine.TextItems)
