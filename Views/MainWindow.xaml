@@ -148,6 +148,10 @@
                         <TextBox Text="{Binding ReplacingTextinStampData.GostSteelReplace}" Height="25" Width="70"/>
                         <CheckBox Content="ГОСТ стали" IsChecked="{Binding ReplacingTextinStampData.IsGostSteel}" VerticalContentAlignment="Center" Padding="3" Margin="3"/>
                     </DockPanel>
+                    <DockPanel>
+                        <TextBlock Text="Высота текста"/>
+                        <TextBox Text="{Binding ReplacingTextinStampData.Height}" Height="25" Width="70"/>
+                    </DockPanel>
                 </StackPanel>
             </TabItem>
 

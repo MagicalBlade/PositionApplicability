@@ -1,4 +1,5 @@
-﻿using System;
+﻿using DocumentFormat.OpenXml.Drawing.Charts;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
@@ -19,6 +20,9 @@ namespace PositionApplicability.Classes
         private string gostProfileReplace = "";
         private string steelReplace = "";
         private string gostSteelReplace = "";
+
+        private double height = 5;
+
 
         private bool isProfile = false;
         private bool isThickness = false;
@@ -41,5 +45,6 @@ namespace PositionApplicability.Classes
         public string GostProfileReplace { get => gostProfileReplace; set => gostProfileReplace = value; }
         public string SteelReplace { get => steelReplace; set => steelReplace = value; }
         public string GostSteelReplace { get => gostSteelReplace; set => gostSteelReplace = value; }
+        public double Height { get => height; set => height = value; }
     }
 }

@@ -1045,6 +1045,12 @@ namespace PositionApplicability.ViewModels
         [RelayCommand(IncludeCancelCommand = true)]
         private async Task ReplacingTextinStamp(CancellationToken token)
         {
+            if (!ReplacingTextinStampData.IsGostProfile && !ReplacingTextinStampData.IsGostSteel 
+                && !ReplacingTextinStampData.IsProfile && !ReplacingTextinStampData.IsSteel && !ReplacingTextinStampData.IsThickness)
+            {
+                Info = "Выберите что хотите заменить";
+                return;
+            }
             if (!Directory.Exists(PathFolderPos))
             {
                 Info = "Не верный путь к сборкам";
@@ -1063,7 +1069,7 @@ namespace PositionApplicability.ViewModels
                 posDrawings = Directory.GetFiles(PathFolderPos, "*.cdw", SearchOption.TopDirectoryOnly);
             }
 
-            await Task.Run(async () =>
+            await Task.Run(() =>
             {
                 Type? kompasType = Type.GetTypeFromProgID("Kompas.Application.5", true);
                 PBExtraction_Value = 10;
@@ -1115,45 +1121,62 @@ namespace PositionApplicability.ViewModels
                             steel = splitsemicolon[1][..splitsemicolon[1].IndexOf(" ")].Trim();
                             gostSteel = splitsemicolon[1][splitsemicolon[1].IndexOf(" ")..].Trim();
                         }
-
+                        bool isFind = false;
                         //Поиск и проверка данных
-                        bool isUpdateStamp = false;
                         if (ReplacingTextinStampData.IsProfile)
                         {
-                            isUpdateStamp = true;
-                            profile = profile.Replace(ReplacingTextinStampData.ProfileFind,
-                                ReplacingTextinStampData.ProfileReplace, StringComparison.InvariantCultureIgnoreCase);
+                            if (profile == ReplacingTextinStampData.ProfileFind)
+                            {
+                                profile = ReplacingTextinStampData.ProfileReplace;
+                                isFind = true;
+                            }
                         }
-
                         if (ReplacingTextinStampData.IsThickness)
                         {
-                            isUpdateStamp = true;
-                            thickness = thickness.Replace(ReplacingTextinStampData.ThicknessFind, 
-                                ReplacingTextinStampData.ThicknessReplace, StringComparison.InvariantCultureIgnoreCase);
+                            if (thickness == ReplacingTextinStampData.ThicknessFind)
+                            {
+                                thickness = ReplacingTextinStampData.ThicknessReplace;
+                                isFind = true;
+                            }
                         }
                         if (ReplacingTextinStampData.IsGostProfile)
                         {
-                            isUpdateStamp = true;
-                            gostProfile = gostProfile.Replace(ReplacingTextinStampData.GostProfileFind, 
-                                ReplacingTextinStampData.GostProfileReplace, StringComparison.InvariantCultureIgnoreCase);
+                            if (gostProfile == ReplacingTextinStampData.GostProfileFind)
+                            {
+                                gostProfile = ReplacingTextinStampData.GostProfileReplace;
+                                isFind = true;
+                            }
                         }
                         if (ReplacingTextinStampData.IsSteel)
                         {
-                            isUpdateStamp = true;
-                            steel = steel.Replace(ReplacingTextinStampData.SteelFind, 
-                                ReplacingTextinStampData.SteelReplace, StringComparison.InvariantCultureIgnoreCase);
+                            if (steel == ReplacingTextinStampData.SteelFind)
+                            {
+                                steel = ReplacingTextinStampData.SteelReplace;
+                                isFind = true;
+                            }
                         }
                         if (ReplacingTextinStampData.IsGostSteel)
                         {
-                            isUpdateStamp = true;
-                            gostSteel = gostSteel.Replace(ReplacingTextinStampData.GostSteelFind, 
-                                ReplacingTextinStampData.GostSteelReplace, StringComparison.InvariantCultureIgnoreCase);
+                            if (gostSteel == ReplacingTextinStampData.GostSteelFind)
+                            {
+                                gostSteel = ReplacingTextinStampData.GostSteelReplace;
+                                isFind = true;
+                            }
                         }
 
                         //Формирование и запись данных в штамп
-                        if (isUpdateStamp)
+                        if (isFind)
                         {
                             stamp.Text[3].Str = $"{profile}$dm {thickness} {gostProfile}; {steel} {gostSteel}$";
+                            foreach (ITextLine textLine in stamp.Text[3].TextLines)
+                            {
+                                foreach (ITextItem item in textLine.TextItems)
+                                {
+                                    ITextFont textFont1 = (ITextFont)item;
+                                    textFont1.Height = ReplacingTextinStampData.Height;
+                                    item.Update();
+                                }
+                            }
                             stamp.Update();
                         }
                     }
@@ -1162,7 +1185,7 @@ namespace PositionApplicability.ViewModels
                     {
                         Log.Add($"{pathfile} - не удалось сохранить чертеж {kompasDocuments2D.Name}");
                     }
-                    //kompasDocuments2D.Close(DocumentCloseOptions.kdDoNotSaveChanges);
+                    kompasDocuments2D.Close(DocumentCloseOptions.kdSaveChanges);
                     if (token.IsCancellationRequested)
                     {
                         kompas.Quit();
