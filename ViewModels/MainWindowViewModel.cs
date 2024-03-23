@@ -1,9 +1,11 @@
 ﻿using ClosedXML.Excel;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
+using DocumentFormat.OpenXml.Drawing.Charts;
 using Kompas6API5;
 using Kompas6Constants;
 using KompasAPI7;
+using PositionApplicability.Classes;
 using PositionApplicability.Data;
 using System;
 using System.Collections.Generic;
@@ -85,6 +87,10 @@ namespace PositionApplicability.ViewModels
         private int _startListNumber = 1;
         #endregion
 
+        #region Поиск и замена строки в штампе
+        [ObservableProperty]
+        private ReplacingTextinStampData _replacingTextinStampData = new ();
+        #endregion
 
 
         #region Извлечение позиций
@@ -1035,6 +1041,151 @@ namespace PositionApplicability.ViewModels
         }
         #endregion
 
+        #region Поиск и замена строки в штампе
+        [RelayCommand(IncludeCancelCommand = true)]
+        private async Task ReplacingTextinStamp(CancellationToken token)
+        {
+            if (!Directory.Exists(PathFolderPos))
+            {
+                Info = "Не верный путь к сборкам";
+                return;
+            }
+            Log.Clear();
+            Info = "Начало замены текста";
+            PBExtraction_Value = 1;
+            string[] posDrawings;
+            if (IsAllDirectoryExtraction)
+            {
+                posDrawings = Directory.GetFiles(PathFolderPos, "*.cdw", SearchOption.AllDirectories);
+            }
+            else
+            {
+                posDrawings = Directory.GetFiles(PathFolderPos, "*.cdw", SearchOption.TopDirectoryOnly);
+            }
+
+            await Task.Run(async () =>
+            {
+                Type? kompasType = Type.GetTypeFromProgID("Kompas.Application.5", true);
+                PBExtraction_Value = 10;
+                if (kompasType == null) return;
+                KompasObject? kompas = Activator.CreateInstance(kompasType) as KompasObject; //Запуск компаса
+                if (kompas == null) return;
+                if (token.IsCancellationRequested)
+                {
+                    kompas.Quit();
+                    PBExtraction_Value = 0;
+                    Info = "Нумерация отменена";
+                    return;
+                }
+                IApplication application = (IApplication)kompas.ksGetApplication7();
+                IDocuments documents = application.Documents;
+                foreach (string pathfile in posDrawings)
+                {
+                    IKompasDocument2D kompasDocuments2D = (IKompasDocument2D)documents.Open(pathfile, false, false);
+                    if (kompasDocuments2D == null)
+                    {
+                        Log.Add($"{pathfile} - не удалось открыть чертеж");
+                        continue;
+                    }
+
+                    ILayoutSheets layoutSheets = kompasDocuments2D.LayoutSheets;
+                    foreach (ILayoutSheet layoutSheet in layoutSheets)
+                    {
+                        string profile = "";
+                        string thickness = "";
+                        string gostProfile = "";
+                        string steel = "";
+                        string gostSteel = "";
+
+                        IStamp stamp = layoutSheet.Stamp;
+                        string stampcell3str = stamp.Text[3].Str;
+                        if (stampcell3str == "")
+                        {
+                            Log.Add($"{pathfile} - ячейка пуста");
+                            continue;
+                        }
+                        string[] splitsemicolon = stampcell3str.Split(";").Select(x => x.Trim(new char[] {' ', '$' })).ToArray();
+                        
+                        //Получение данных из штампа
+                        profile = stampcell3str[..stampcell3str.IndexOf("$")].Trim();
+                        if (splitsemicolon.Length == 2)
+                        {
+                            thickness = splitsemicolon[0][splitsemicolon[0].IndexOf(" ")..splitsemicolon[0].IndexOf("ГОСТ")].Trim();
+                            gostProfile = splitsemicolon[0][splitsemicolon[0].IndexOf("ГОСТ")..].Trim();
+                            steel = splitsemicolon[1][..splitsemicolon[1].IndexOf(" ")].Trim();
+                            gostSteel = splitsemicolon[1][splitsemicolon[1].IndexOf(" ")..].Trim();
+                        }
+
+                        //Поиск и проверка данных
+                        bool isUpdateStamp = false;
+                        if (ReplacingTextinStampData.IsProfile)
+                        {
+                            isUpdateStamp = true;
+                            profile = profile.Replace(ReplacingTextinStampData.ProfileFind,
+                                ReplacingTextinStampData.ProfileReplace, StringComparison.InvariantCultureIgnoreCase);
+                        }
+
+                        if (ReplacingTextinStampData.IsThickness)
+                        {
+                            isUpdateStamp = true;
+                            thickness = thickness.Replace(ReplacingTextinStampData.ThicknessFind, 
+                                ReplacingTextinStampData.ThicknessReplace, StringComparison.InvariantCultureIgnoreCase);
+                        }
+                        if (ReplacingTextinStampData.IsGostProfile)
+                        {
+                            isUpdateStamp = true;
+                            gostProfile = gostProfile.Replace(ReplacingTextinStampData.GostProfileFind, 
+                                ReplacingTextinStampData.GostProfileReplace, StringComparison.InvariantCultureIgnoreCase);
+                        }
+                        if (ReplacingTextinStampData.IsSteel)
+                        {
+                            isUpdateStamp = true;
+                            steel = steel.Replace(ReplacingTextinStampData.SteelFind, 
+                                ReplacingTextinStampData.SteelReplace, StringComparison.InvariantCultureIgnoreCase);
+                        }
+                        if (ReplacingTextinStampData.IsGostSteel)
+                        {
+                            isUpdateStamp = true;
+                            gostSteel = gostSteel.Replace(ReplacingTextinStampData.GostSteelFind, 
+                                ReplacingTextinStampData.GostSteelReplace, StringComparison.InvariantCultureIgnoreCase);
+                        }
+
+                        //Формирование и запись данных в штамп
+                        if (isUpdateStamp)
+                        {
+                            stamp.Text[3].Str = $"{profile}$dm {thickness} {gostProfile}; {steel} {gostSteel}$";
+                            stamp.Update();
+                        }
+                    }
+                    kompasDocuments2D.Save();
+                    if (kompasDocuments2D.Changed)
+                    {
+                        Log.Add($"{pathfile} - не удалось сохранить чертеж {kompasDocuments2D.Name}");
+                    }
+                    //kompasDocuments2D.Close(DocumentCloseOptions.kdDoNotSaveChanges);
+                    if (token.IsCancellationRequested)
+                    {
+                        kompas.Quit();
+                        PBExtraction_Value = 0;
+                        Info = "Замена отменена";
+                        return;
+                    }
+                    PBExtraction_Value += 90 / posDrawings.Length;
+                }
+                kompas.Quit();
+                PBExtraction_Value = 100;
+                WriteLog();
+                Info = "Замена закончена";
+                if (Log.Count > 0)
+                {
+                    Info += ". Есть ошибки, посмотрите журнал.";
+                }
+            }, token);
+
+            OpenLogCommand.NotifyCanExecuteChanged();
+
+        }
+        #endregion
 
         [RelayCommand]
         private void OpenTxT(string file)

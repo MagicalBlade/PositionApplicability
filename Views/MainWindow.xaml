@@ -89,6 +89,7 @@
                 </StackPanel>
                 
             </TabItem>
+            
             <TabItem Header="Нумерация листов сборок">
                 <StackPanel Grid.Row="0" Orientation="Vertical">
                     <DockPanel>
@@ -105,6 +106,51 @@
                     </StackPanel>
                 </StackPanel>
             </TabItem>
+
+            <TabItem Header="Поиск и замена в штампе">
+                <StackPanel Grid.Row="0" Orientation="Vertical">
+                    <DockPanel>
+                        <Button Content="Указать путь к деталировке:" Padding="3" Margin="3"  Command="{Binding OpenFolderDialogPosCommand}"/>
+                        <TextBox Height="25" Padding="3" Margin="3" Text="{Binding PathFolderPos}"/>
+                    </DockPanel>
+                    <ProgressBar Height="25" Value = "{Binding PBExtraction_Value}"/>
+                    <StackPanel Orientation="Horizontal" HorizontalAlignment="Center">
+                        <CheckBox Content="В подпапках" IsChecked="{Binding IsAllDirectoryExtraction}" VerticalContentAlignment="Center" VerticalAlignment="Center" Padding="3" Margin="3"/>
+                        <Button Content="Заменить" Padding="5,5" Command="{Binding ReplacingTextinStampCommand}"/>
+                        <Button Content="Отмена" HorizontalAlignment="Center" Padding="3" Margin="3" Command="{Binding ReplacingTextinStampCancelCommand}"/>
+                    </StackPanel>
+                    <DockPanel>
+                        <TextBlock Text="Найти" Width="70"/>
+                        <TextBlock Text="Заменить" Width="70"/>
+                    </DockPanel>
+                    <DockPanel>
+                        <TextBox Text="{Binding ReplacingTextinStampData.ProfileFind}" Height="25" Width="70"/>
+                        <TextBox Text="{Binding ReplacingTextinStampData.ProfileReplace}" Height="25" Width="70"/>
+                        <CheckBox Content="Тип профиля" IsChecked="{Binding ReplacingTextinStampData.IsProfile}" VerticalContentAlignment="Center" Padding="3" Margin="3"/>
+                    </DockPanel>
+                    <DockPanel>
+                        <TextBox Text="{Binding ReplacingTextinStampData.ThicknessFind}" Height="25" Width="70"/>
+                        <TextBox Text="{Binding ReplacingTextinStampData.ThicknessReplace}" Height="25" Width="70"/>
+                        <CheckBox Content="Толщина" IsChecked="{Binding ReplacingTextinStampData.IsThickness}" VerticalContentAlignment="Center" Padding="3" Margin="3"/>
+                    </DockPanel>
+                    <DockPanel>
+                        <TextBox Text="{Binding ReplacingTextinStampData.GostProfileFind}" Height="25" Width="70"/>
+                        <TextBox Text="{Binding ReplacingTextinStampData.GostProfileReplace}" Height="25" Width="70"/>
+                        <CheckBox Content="ГОСТ профиля" IsChecked="{Binding ReplacingTextinStampData.IsGostProfile}" VerticalContentAlignment="Center" Padding="3" Margin="3"/>
+                    </DockPanel>
+                    <DockPanel>
+                        <TextBox Text="{Binding ReplacingTextinStampData.SteelFind}" Height="25" Width="70"/>
+                        <TextBox Text="{Binding ReplacingTextinStampData.SteelReplace}" Height="25" Width="70"/>
+                        <CheckBox Content="Сталь" IsChecked="{Binding ReplacingTextinStampData.IsSteel}" VerticalContentAlignment="Center" Padding="3" Margin="3"/>
+                    </DockPanel>
+                    <DockPanel>
+                        <TextBox Text="{Binding ReplacingTextinStampData.GostSteelFind}" Height="25" Width="70"/>
+                        <TextBox Text="{Binding ReplacingTextinStampData.GostSteelReplace}" Height="25" Width="70"/>
+                        <CheckBox Content="ГОСТ стали" IsChecked="{Binding ReplacingTextinStampData.IsGostSteel}" VerticalContentAlignment="Center" Padding="3" Margin="3"/>
+                    </DockPanel>
+                </StackPanel>
+            </TabItem>
+
         </TabControl>
         <Button Grid.Row="1" Content="Журнал" Padding="5,5" Margin="10,0" HorizontalAlignment="Right" Command="{Binding OpenLogCommand}"/>
         <StatusBar Grid.Row="2">
