@@ -1110,18 +1110,24 @@ namespace PositionApplicability.ViewModels
                             Log.Add($"{pathfile} - ячейка пуста");
                             continue;
                         }
-                        string[] splitsemicolon = stampcell3str.Split(";").Select(x => x.Trim(new char[] {' ', '$' })).ToArray();
-                        
-                        //Получение данных из штампа
-                        profile = stampcell3str[..stampcell3str.IndexOf("$")].Trim();
-                        if (splitsemicolon.Length == 2)
-                        {
-                            thickness = splitsemicolon[0][(splitsemicolon[0].IndexOf("$")+2)..splitsemicolon[0].IndexOf("ГОСТ")].Trim();
-                            gostProfile = splitsemicolon[0][splitsemicolon[0].IndexOf("ГОСТ")..].Trim();
-                            steel = splitsemicolon[1][..splitsemicolon[1].IndexOf(" ")].Trim();
-                            gostSteel = splitsemicolon[1][splitsemicolon[1].IndexOf(" ")..].Trim();
-                        }
 
+                        //Получение данных из штампа
+                        string[] splitsemicolon = stampcell3str.Split("$dsm; ".ToCharArray(), StringSplitOptions.RemoveEmptyEntries);
+                        if (splitsemicolon.Length > 4)
+                        {
+                            profile = splitsemicolon[0];
+                            thickness = splitsemicolon[1];
+                            gostProfile = $"{splitsemicolon[2]} {splitsemicolon[3]}";
+                        }
+                        if (splitsemicolon.Length > 6)
+                        {
+                            steel = splitsemicolon[4];
+                            gostSteel = $"{splitsemicolon[5]} {splitsemicolon[6]}";
+                        }
+                        if (splitsemicolon.Length > 7)
+                        {
+                            gostSteel += $" {splitsemicolon[7]}";
+                        }
                         #region Поиск и проверка данных
                         bool isFind = false;
                         if (ReplacingTextinStampData.IsProfile)
@@ -1163,7 +1169,7 @@ namespace PositionApplicability.ViewModels
                                 gostSteel = ReplacingTextinStampData.GostSteelReplace;
                                 isFind = true;
                             }
-                        } 
+                        }
                         #endregion
 
                         //Формирование и запись данных в штамп
@@ -1181,6 +1187,7 @@ namespace PositionApplicability.ViewModels
                             }
                             stamp.Update();
                         }
+
                     }
                     kompasDocuments2D.Save();
                     if (kompasDocuments2D.Changed)

@@ -120,37 +120,37 @@
                         <Button Content="Отмена" HorizontalAlignment="Center" Padding="3" Margin="3" Command="{Binding ReplacingTextinStampCancelCommand}"/>
                     </StackPanel>
                     <DockPanel>
-                        <TextBlock Text="Найти" Width="70"/>
-                        <TextBlock Text="Заменить" Width="70"/>
+                        <TextBlock Text="Найти" Width="140"/>
+                        <TextBlock Text="Заменить" Width="140" HorizontalAlignment="Left"/>
                     </DockPanel>
                     <DockPanel>
-                        <TextBox Text="{Binding ReplacingTextinStampData.ProfileFind}" Height="25" Width="70"/>
-                        <TextBox Text="{Binding ReplacingTextinStampData.ProfileReplace}" Height="25" Width="70"/>
+                        <TextBox Text="{Binding ReplacingTextinStampData.ProfileFind}" Height="25" Width="140"/>
+                        <TextBox Text="{Binding ReplacingTextinStampData.ProfileReplace}" Height="25" Width="140"/>
                         <CheckBox Content="Тип профиля" IsChecked="{Binding ReplacingTextinStampData.IsProfile}" VerticalContentAlignment="Center" Padding="3" Margin="3"/>
                     </DockPanel>
                     <DockPanel>
-                        <TextBox Text="{Binding ReplacingTextinStampData.ThicknessFind}" Height="25" Width="70"/>
-                        <TextBox Text="{Binding ReplacingTextinStampData.ThicknessReplace}" Height="25" Width="70"/>
+                        <TextBox Text="{Binding ReplacingTextinStampData.ThicknessFind}" Height="25" Width="140"/>
+                        <TextBox Text="{Binding ReplacingTextinStampData.ThicknessReplace}" Height="25" Width="140"/>
                         <CheckBox Content="Толщина" IsChecked="{Binding ReplacingTextinStampData.IsThickness}" VerticalContentAlignment="Center" Padding="3" Margin="3"/>
                     </DockPanel>
                     <DockPanel>
-                        <TextBox Text="{Binding ReplacingTextinStampData.GostProfileFind}" Height="25" Width="70"/>
-                        <TextBox Text="{Binding ReplacingTextinStampData.GostProfileReplace}" Height="25" Width="70"/>
+                        <TextBox Text="{Binding ReplacingTextinStampData.GostProfileFind}" Height="25" Width="140"/>
+                        <TextBox Text="{Binding ReplacingTextinStampData.GostProfileReplace}" Height="25" Width="140"/>
                         <CheckBox Content="ГОСТ профиля" IsChecked="{Binding ReplacingTextinStampData.IsGostProfile}" VerticalContentAlignment="Center" Padding="3" Margin="3"/>
                     </DockPanel>
                     <DockPanel>
-                        <TextBox Text="{Binding ReplacingTextinStampData.SteelFind}" Height="25" Width="70"/>
-                        <TextBox Text="{Binding ReplacingTextinStampData.SteelReplace}" Height="25" Width="70"/>
+                        <TextBox Text="{Binding ReplacingTextinStampData.SteelFind}" Height="25" Width="140"/>
+                        <TextBox Text="{Binding ReplacingTextinStampData.SteelReplace}" Height="25" Width="140"/>
                         <CheckBox Content="Сталь" IsChecked="{Binding ReplacingTextinStampData.IsSteel}" VerticalContentAlignment="Center" Padding="3" Margin="3"/>
                     </DockPanel>
                     <DockPanel>
-                        <TextBox Text="{Binding ReplacingTextinStampData.GostSteelFind}" Height="25" Width="70"/>
-                        <TextBox Text="{Binding ReplacingTextinStampData.GostSteelReplace}" Height="25" Width="70"/>
+                        <TextBox Text="{Binding ReplacingTextinStampData.GostSteelFind}" Height="25" Width="140"/>
+                        <TextBox Text="{Binding ReplacingTextinStampData.GostSteelReplace}" Height="25" Width="140"/>
                         <CheckBox Content="ГОСТ стали" IsChecked="{Binding ReplacingTextinStampData.IsGostSteel}" VerticalContentAlignment="Center" Padding="3" Margin="3"/>
                     </DockPanel>
-                    <DockPanel>
+                    <DockPanel Margin="5">
                         <TextBlock Text="Высота текста"/>
-                        <TextBox Text="{Binding ReplacingTextinStampData.Height}" Height="25" Width="70"/>
+                        <TextBox Text="{Binding ReplacingTextinStampData.Height}" Height="25" Width="40" HorizontalAlignment="Left" HorizontalContentAlignment="Center"/>
                     </DockPanel>
                 </StackPanel>
             </TabItem>
