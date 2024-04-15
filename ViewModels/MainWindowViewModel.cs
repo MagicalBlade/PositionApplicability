@@ -493,6 +493,15 @@ namespace PositionApplicability.ViewModels
                 double ySetPlacementTable = 0;
                 ILayoutSheets layoutSheets = kompasDocuments2D.LayoutSheets;
                 ILayoutSheet layoutSheet = layoutSheets.ItemByNumber[1];
+                // Получение листа в старых версиях чертежа. В них видимо нет возможности получить лист по номеру листа.
+                if (layoutSheet == null)
+                {
+                    foreach (ILayoutSheet item in layoutSheets)
+                    {
+                        layoutSheet = item;
+                        break;
+                    }
+                };
                 ISheetFormat sheetFormat = layoutSheet.Format;
                 switch (sheetFormat.Format)
                 {
@@ -754,7 +763,26 @@ namespace PositionApplicability.ViewModels
                     continue;
                 }
                 ILayoutSheets layoutSheets = kompasDocument.LayoutSheets;
+                if (layoutSheets == null)
+                {
+                    Log.Add($"{path} - не найдены листы");
+                    return;
+                }
+                if (layoutSheets.Count == 0)
+                {
+                    Log.Add($"{path} - не найдены листы");
+                    return;
+                }
                 ILayoutSheet layoutSheet = layoutSheets.ItemByNumber[1];
+                // Получение листа в старых версиях чертежа. В них видимо нет возможности получить лист по номеру листа.
+                if (layoutSheet == null)
+                {
+                    foreach (ILayoutSheet item in layoutSheets)
+                    {
+                        layoutSheet = item;
+                        break;
+                    }
+                };
                 IStamp stamp = layoutSheet.Stamp;
                 IText text3 = stamp.Text[3];
                 string text3Str = text3.Str;
@@ -1017,6 +1045,7 @@ namespace PositionApplicability.ViewModels
                     {
                         Log.Add($"{pathfile} - не удалось сохранить чертеж ({StartListNumber} - его номер листа)");
                     }
+                    kompasDocuments2D.Close(Kompas6Constants.DocumentCloseOptions.kdDoNotSaveChanges);
                     if (token.IsCancellationRequested)
                     {
                         kompas.Quit();
@@ -1210,7 +1239,7 @@ namespace PositionApplicability.ViewModels
                 Info = "Замена закончена";
                 if (Log.Count > 0)
                 {
-                    Info += ". Есть ошибки, посмотрите журнал.";
+                    Info += "Есть ошибки, посмотрите журнал.";
                 }
             }, token);
 
