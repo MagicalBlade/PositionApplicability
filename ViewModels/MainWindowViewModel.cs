@@ -1215,13 +1215,13 @@ namespace PositionApplicability.ViewModels
                                 }
                             }
                             stamp.Update();
+                            kompasDocuments2D.Save();
+                            if (kompasDocuments2D.Changed)
+                            {
+                                Log.Add($"{pathfile} - не удалось сохранить чертеж {kompasDocuments2D.Name}");
+                            }
                         }
 
-                    }
-                    kompasDocuments2D.Save();
-                    if (kompasDocuments2D.Changed)
-                    {
-                        Log.Add($"{pathfile} - не удалось сохранить чертеж {kompasDocuments2D.Name}");
                     }
                     kompasDocuments2D.Close(DocumentCloseOptions.kdSaveChanges);
                     if (token.IsCancellationRequested)
