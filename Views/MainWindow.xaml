@@ -155,6 +155,21 @@
                 </StackPanel>
             </TabItem>
 
+            <TabItem Header="Запись в спецификацию">
+                <StackPanel Grid.Row="0" Orientation="Vertical">
+                    <DockPanel>
+                        <Button Content="Указать путь к Excel файлу:" Padding="3" Margin="3"  Command="{Binding OpenFolderDialogAssemblyCommand}"/>
+                        <TextBox Height="25" Padding="3" Margin="3" Text="{Binding PathFolderAssembly}"/>
+                    </DockPanel>
+                    <ProgressBar Height="25" Value = "{Binding PBExtraction_Value}"/>
+                    <StackPanel Orientation="Horizontal" HorizontalAlignment="Center">
+                        <CheckBox Content="В подпапках" IsChecked="{Binding IsAllDirectoryExtraction}" VerticalContentAlignment="Center" VerticalAlignment="Center" Padding="3" Margin="3"/>
+                        <Button Content="Работать" Padding="5,5" Command="{Binding WritetoSpecCommand}"/>
+                        <Button Content="Отмена" HorizontalAlignment="Center" Padding="3" Margin="3" Command="{Binding WritetoSpecCancelCommand}"/>
+                    </StackPanel>
+                </StackPanel>
+            </TabItem>
+
         </TabControl>
         <Button Grid.Row="1" Content="Журнал" Padding="5,5" Margin="10,0" HorizontalAlignment="Right" Command="{Binding OpenLogCommand}"/>
         <StatusBar Grid.Row="2">

@@ -1247,8 +1247,95 @@ namespace PositionApplicability.ViewModels
 
         }
         #endregion
+        [RelayCommand(IncludeCancelCommand = true)]
+        private async Task WritetoSpec(CancellationToken token)
+        {
+            string path = "d:\\C#\\For project\\PositionApplicability\\До заполнение спецификации\\Примеры от Павла\\Блок Б1.cdw";
+            await Task.Run(() =>
+            {
+                #region Получаем данные из таблицы
+                string pathexcel = "d:\\C#\\For project\\PositionApplicability\\До заполнение спецификации\\Примеры от Павла\\Отчёт расчеты.xlsx";
+                Dictionary<string, string[]> data = new();
 
-        [RelayCommand]
+                var workbook = new XLWorkbook(pathexcel);
+                IXLWorksheet ws = workbook.Worksheet("Позиции");
+                IXLCell cell = ws.Cell(1, 1);
+                for (int i = 3; i < ws.LastRowUsed().RowNumber() + 1; i++)
+                {
+                    if (data.ContainsKey(ws.Cell(i, 1).GetValue<string>()))
+                    {
+                        data[ws.Cell(i, 1).GetValue<string>()] = new string[]
+                        {
+                                ws.Cell(i, 5).GetValue<string>(),
+                         ws.Cell(i, 6).GetValue<string>(),
+                         ws.Cell(i, 7).GetValue<string>(),
+                         ws.Cell(i, 8).GetValue<string>(),
+                        };
+                    }
+                    else
+                    {
+                        data.Add(ws.Cell(i, 1).GetValue<string>(), new string[]
+                        {ws.Cell(i, 5).GetValue<string>(),
+                         ws.Cell(i, 6).GetValue<string>(),
+                         ws.Cell(i, 7).GetValue<string>(),
+                         ws.Cell(i, 8).GetValue<string>(),
+                        });
+                    }
+                }
+                return;
+                #endregion
+                
+                
+                #region Ищем таблицу "Спецификация стали"
+                List<ITable> tableSpec = new();
+                Type? kompasType = Type.GetTypeFromProgID("Kompas.Application.5", true);
+                PBExtraction_Value = 10;
+                if (kompasType == null) return;
+                KompasObject? kompas = Activator.CreateInstance(kompasType) as KompasObject; //Запуск компаса
+                if (kompas == null) return;
+                if (token.IsCancellationRequested)
+                {
+                    kompas.Quit();
+                    PBExtraction_Value = 0;
+                    Info = "Отменено";
+                    return;
+                }
+                IApplication application = (IApplication)kompas.ksGetApplication7();
+                IDocuments documents = application.Documents;
+                IKompasDocument2D kompasDocuments2D = (IKompasDocument2D)documents.Open(path, false, false);
+                IViewsAndLayersManager viewsAndLayersManager = kompasDocuments2D.ViewsAndLayersManager;
+                IViews views = viewsAndLayersManager.Views;
+                foreach (IView view in views)
+                {
+                    ISymbols2DContainer symbols2DContainer = (ISymbols2DContainer)view;
+                    IDrawingTables drawingTables = symbols2DContainer.DrawingTables;
+                    foreach (IDrawingTable drawingTable in drawingTables)
+                    {
+                        ITable table = (ITable)drawingTable;
+                        IText text = (IText)table.Cell[0, 0].Text;
+                        if (text.Str.Trim().IndexOf("Спецификация стали") != -1)
+                        {
+                            tableSpec.Add(table);
+                        }
+                    }
+                }
+
+                if (tableSpec.Count > 1)
+                {
+                    kompas.Quit();
+                    PBExtraction_Value = 0;
+                    Info = "Отменено";
+                    return;
+                } 
+                #endregion
+                kompas.Quit();
+                
+            });
+        }
+        
+
+
+            [RelayCommand]
         private void OpenTxT(string file)
         {
             Info = "";
