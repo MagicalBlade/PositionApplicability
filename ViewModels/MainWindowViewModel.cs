@@ -8,6 +8,7 @@ using KompasAPI7;
 using PositionApplicability.Classes;
 using PositionApplicability.Data;
 using System;
+using System.Collections;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.IO;
@@ -1255,31 +1256,40 @@ namespace PositionApplicability.ViewModels
             {
                 #region Получаем данные из таблицы
                 string pathexcel = "d:\\C#\\For project\\PositionApplicability\\До заполнение спецификации\\Примеры от Павла\\Отчёт расчеты.xlsx";
-                Dictionary<string, string[]> data = new();
+                Dictionary<string, Dictionary<string, string[]>> data = new(); //Key = марка
 
                 var workbook = new XLWorkbook(pathexcel);
                 IXLWorksheet ws = workbook.Worksheet("Позиции");
-                IXLCell cell = ws.Cell(1, 1);
                 for (int i = 3; i < ws.LastRowUsed().RowNumber() + 1; i++)
                 {
-                    if (data.ContainsKey(ws.Cell(i, 1).GetValue<string>()))
+                    string key = ws.Cell(i, 11).GetValue<string>();
+                    string key1 = ws.Cell(i, 1).GetValue<string>();
+                    if (data.ContainsKey(key))
                     {
-                        data[ws.Cell(i, 1).GetValue<string>()] = new string[]
+                        if (data[key].ContainsKey(key1))
                         {
-                                ws.Cell(i, 5).GetValue<string>(),
-                         ws.Cell(i, 6).GetValue<string>(),
-                         ws.Cell(i, 7).GetValue<string>(),
-                         ws.Cell(i, 8).GetValue<string>(),
-                        };
+                            MessageBox.Show("Error"); //написать вывод в лог
+                        }
+                        else
+                        {
+                            data[key].Add(key1, new string[]
+                            {
+                                 ws.Cell(i, 5).GetValue<string>(),
+                                 ws.Cell(i, 6).GetValue<string>(),
+                                 ws.Cell(i, 7).GetValue<string>(),
+                                 ws.Cell(i, 8).GetValue<string>(),
+                            });
+                        }
                     }
                     else
                     {
-                        data.Add(ws.Cell(i, 1).GetValue<string>(), new string[]
-                        {ws.Cell(i, 5).GetValue<string>(),
-                         ws.Cell(i, 6).GetValue<string>(),
-                         ws.Cell(i, 7).GetValue<string>(),
-                         ws.Cell(i, 8).GetValue<string>(),
-                        });
+                        data.Add(key, new Dictionary<string, string[]>() {{ key1,  new string[]
+                            {
+                                 ws.Cell(i, 5).GetValue<string>(),
+                                 ws.Cell(i, 6).GetValue<string>(),
+                                 ws.Cell(i, 7).GetValue<string>(),
+                                 ws.Cell(i, 8).GetValue<string>(),
+                            } } });
                     }
                 }
                 return;
@@ -1329,7 +1339,6 @@ namespace PositionApplicability.ViewModels
                 } 
                 #endregion
                 kompas.Quit();
-                
             });
         }
         
