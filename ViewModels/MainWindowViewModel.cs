@@ -1268,7 +1268,7 @@ namespace PositionApplicability.ViewModels
                     {
                         if (data[key].ContainsKey(key1))
                         {
-                            MessageBox.Show("Error"); //написать вывод в лог
+                            MessageBox.Show("Error"); //TODO написать вывод в лог
                         }
                         else
                         {
@@ -1292,12 +1292,11 @@ namespace PositionApplicability.ViewModels
                             } } });
                     }
                 }
-                return;
                 #endregion
                 
                 
                 #region Ищем таблицу "Спецификация стали"
-                List<ITable> tableSpec = new();
+                List<IDrawingTable> tableSpec = new();
                 Type? kompasType = Type.GetTypeFromProgID("Kompas.Application.5", true);
                 PBExtraction_Value = 10;
                 if (kompasType == null) return;
@@ -1325,7 +1324,7 @@ namespace PositionApplicability.ViewModels
                         IText text = (IText)table.Cell[0, 0].Text;
                         if (text.Str.Trim().IndexOf("Спецификация стали") != -1)
                         {
-                            tableSpec.Add(table);
+                            tableSpec.Add(drawingTable);
                         }
                     }
                 }
@@ -1336,8 +1335,30 @@ namespace PositionApplicability.ViewModels
                     PBExtraction_Value = 0;
                     Info = "Отменено";
                     return;
-                } 
+                }
                 #endregion
+
+                #region Заполняем таблицу
+                string mark = "Б1";
+                ITable table1 = (ITable)tableSpec[0];
+                for (int i = 3; i < table1.RowsCount; i++)
+                {
+                    IText text = (IText)table1.Cell[i, 0].Text;
+                    if (data.ContainsKey(mark))
+                    {
+                        if (data[mark].ContainsKey(text.Str))
+                        {
+                            ((IText)table1.Cell[i, 4].Text).Str = data[mark][text.Str][0];
+                            ((IText)table1.Cell[i, 5].Text).Str = data[mark][text.Str][1];
+                            ((IText)table1.Cell[i, 6].Text).Str = data[mark][text.Str][2];
+                            ((IText)table1.Cell[i, 7].Text).Str = data[mark][text.Str][3];
+                        }
+                    }
+                }
+                tableSpec[0].Update();
+                kompasDocuments2D.Close(DocumentCloseOptions.kdSaveChanges);
+                #endregion
+
                 kompas.Quit();
             });
         }
