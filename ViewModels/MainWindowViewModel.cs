@@ -85,6 +85,14 @@ namespace PositionApplicability.ViewModels
         [ObservableProperty]
         private string _logWrite = "";
 
+        #region Внутренние переменные
+        /// <summary>
+        /// Данные из экселя. Список марок со списком позиций в этих марках и данными этих позиций
+        /// </summary>
+        private Dictionary<string, Dictionary<string, string[]>> ExcelToSpecKompas_MarksPos = new(); //Key = марка, Key во второс словаре = позиция
+
+        #endregion
+
         #region Нумерация сборок
         /// <summary>
         /// Стартовый номер для нумерации
@@ -1264,8 +1272,10 @@ namespace PositionApplicability.ViewModels
         private async Task ExcelToSpecKompas_ReadExcel (CancellationToken token)
         {
             LogWrite = "";
+            ExcelToSpecKompas_MarksPos.Clear();
             string pathexcel = "";
             string sheetname = "Позиции";
+            
             OpenFileDialog dialog = new()
             {
                 Filter = "excel files(*.xlsx)|*.xlsx"
@@ -1274,6 +1284,10 @@ namespace PositionApplicability.ViewModels
             {
                 pathexcel = dialog.FileName;
             }
+            else
+            {
+                return;
+            }
             await Task.Run(() =>
             {
                 if (!File.Exists(pathexcel))
@@ -1281,7 +1295,6 @@ namespace PositionApplicability.ViewModels
                     LogWrite += $"Ошибка: не найден - {pathexcel}";
                     return;
                 }
-                Dictionary<string, Dictionary<string, string[]>> data = new(); //Key = марка, Key во второс словаре = позиция
                 var workbook = new XLWorkbook(pathexcel);
                 if (workbook == null)
                 {
@@ -1298,15 +1311,15 @@ namespace PositionApplicability.ViewModels
                 {
                     string keyMark = ws.Cell(i, 11).GetValue<string>();
                     string key_Pos = ws.Cell(i, 1).GetValue<string>();
-                    if (data.ContainsKey(keyMark))
+                    if (ExcelToSpecKompas_MarksPos.ContainsKey(keyMark))
                     {
-                        if (data[keyMark].ContainsKey(key_Pos))
+                        if (ExcelToSpecKompas_MarksPos[keyMark].ContainsKey(key_Pos))
                         {
                             LogWrite += $"Ошибка: В марке {keyMark} несколько позиций {key_Pos}\n";
                         }
                         else
                         {
-                            data[keyMark].Add(key_Pos, new string[]
+                            ExcelToSpecKompas_MarksPos[keyMark].Add(key_Pos, new string[]
                             {
                                  ws.Cell(i, 5).GetValue<string>(),
                                  ws.Cell(i, 6).GetValue<string>(),
@@ -1317,7 +1330,7 @@ namespace PositionApplicability.ViewModels
                     }
                     else
                     {
-                        data.Add(keyMark, new Dictionary<string, string[]>() {{ key_Pos,  new string[]
+                        ExcelToSpecKompas_MarksPos.Add(keyMark, new Dictionary<string, string[]>() {{ key_Pos,  new string[]
                             {
                                  ws.Cell(i, 5).GetValue<string>(),
                                  ws.Cell(i, 6).GetValue<string>(),
@@ -1342,116 +1355,135 @@ namespace PositionApplicability.ViewModels
         [RelayCommand(IncludeCancelCommand = true)]
         private async Task ExcelToSpecKompas_WriteToSpec(CancellationToken token)
         {
-            string path = "d:\\C#\\For project\\PositionApplicability\\До заполнение спецификации\\Примеры от Павла\\Блок Б1.cdw";
-            await Task.Run(() =>
+            LogWrite = "";
+            if (ExcelToSpecKompas_MarksPos.Count == 0)
             {
-                #region Получаем данные из таблицы
-                string pathexcel = "d:\\C#\\For project\\PositionApplicability\\До заполнение спецификации\\Примеры от Павла\\Отчёт расчеты.xlsx";
-                Dictionary<string, Dictionary<string, string[]>> data = new(); //Key = марка
+                LogWrite += "Ошибка: загрузите Excel файл";
+                return;
+            }
+            if (!Directory.Exists(PathFolderAssembly))
+            {
+                LogWrite += "Ошибка: не найден путь к файлам сборок";
+                return;
+            }
+            List<string> pathsAssemble = new List<string>();
 
-                var workbook = new XLWorkbook(pathexcel);
-                IXLWorksheet ws = workbook.Worksheet("Позиции");
-                for (int i = 3; i < ws.LastRowUsed().RowNumber() + 1; i++)
+            await Task.Run((Action)(() =>
+            {
+                SearchOption searchOptionFill;
+                if (IsAllDirectoryFill)
                 {
-                    string key = ws.Cell(i, 11).GetValue<string>();
-                    string key1 = ws.Cell(i, 1).GetValue<string>();
-                    if (data.ContainsKey(key))
-                    {
-                        if (data[key].ContainsKey(key1))
-                        {
-                            MessageBox.Show("Error"); //TODO написать вывод в лог
-                        }
-                        else
-                        {
-                            data[key].Add(key1, new string[]
-                            {
-                                 ws.Cell(i, 5).GetValue<string>(),
-                                 ws.Cell(i, 6).GetValue<string>(),
-                                 ws.Cell(i, 7).GetValue<string>(),
-                                 ws.Cell(i, 8).GetValue<string>(),
-                            });
-                        }
-                    }
-                    else
-                    {
-                        data.Add(key, new Dictionary<string, string[]>() {{ key1,  new string[]
-                            {
-                                 ws.Cell(i, 5).GetValue<string>(),
-                                 ws.Cell(i, 6).GetValue<string>(),
-                                 ws.Cell(i, 7).GetValue<string>(),
-                                 ws.Cell(i, 8).GetValue<string>(),
-                            } } });
-                    }
+                    searchOptionFill = SearchOption.AllDirectories;
                 }
-                #endregion
+                else
+                {
+                    searchOptionFill = SearchOption.TopDirectoryOnly;
+                }
 
-
-                #region Ищем таблицу "Спецификация стали"
-                List<IDrawingTable> tableSpec = new();
+                #region Запуск Компаса
                 Type? kompasType = Type.GetTypeFromProgID("Kompas.Application.5", true);
                 PBExtraction_Value = 10;
                 if (kompasType == null) return;
                 KompasObject? kompas = Activator.CreateInstance(kompasType) as KompasObject; //Запуск компаса
-                if (kompas == null) return;
+                if (kompas == null)
+                {
+                    LogWrite += "Ошибка: не получилось запустить Компас";
+                    return;
+                }
                 if (token.IsCancellationRequested)
                 {
                     kompas.Quit();
                     PBExtraction_Value = 0;
                     Info = "Отменено";
                     return;
-                }
-                IApplication application = (IApplication)kompas.ksGetApplication7();
-                IDocuments documents = application.Documents;
-                IKompasDocument2D kompasDocuments2D = (IKompasDocument2D)documents.Open(path, false, false);
-                IViewsAndLayersManager viewsAndLayersManager = kompasDocuments2D.ViewsAndLayersManager;
-                IViews views = viewsAndLayersManager.Views;
-                foreach (IView view in views)
+                } 
+                #endregion
+                foreach (string mark in ExcelToSpecKompas_MarksPos.Keys)
                 {
-                    ISymbols2DContainer symbols2DContainer = (ISymbols2DContainer)view;
-                    IDrawingTables drawingTables = symbols2DContainer.DrawingTables;
-                    foreach (IDrawingTable drawingTable in drawingTables)
+                    string pathAssemble = "";
+                    string[] paths = Directory.GetFiles(PathFolderAssembly, $"* {mark}*.cdw", searchOptionFill).ToArray<string>();
+                    if (paths.Length == 0)
                     {
-                        ITable table = (ITable)drawingTable;
-                        IText text = (IText)table.Cell[0, 0].Text;
-                        if (text.Str.Trim().IndexOf("Спецификация стали") != -1)
+                        LogWrite += $"Ошибка: не найден файл марки {mark}\n";
+                        continue;
+                    }
+                    if (paths.Length > 1)
+                    {
+                        LogWrite += $"Ошибка: найдено больше одного файла марки {mark}. Спецификация в данной марке не будет заполнена.\n";
+                        continue;
+                    }
+                    pathAssemble = paths[0];
+                    if (!File.Exists(pathAssemble))
+                    {
+                        LogWrite += $"Ошибка: не найден файл марки {mark}.\n";
+                        continue;
+                    }
+                    #region Ищем таблицу "Спецификация стали"
+                    List<IDrawingTable> tableSpec = new();
+                    IApplication application = (IApplication)kompas.ksGetApplication7();
+                    IDocuments documents = application.Documents;
+                    IKompasDocument2D kompasDocuments2D = (IKompasDocument2D)documents.Open(pathAssemble, false, false);
+                    if (kompasDocuments2D == null)
+                    {
+                        LogWrite += $"Ошибка: найдено больше одного файла марки {mark}. Спецификация в данной марке не будет заполнена.\n";
+                        continue;
+                    }
+                    IViewsAndLayersManager viewsAndLayersManager = kompasDocuments2D.ViewsAndLayersManager;
+                    IViews views = viewsAndLayersManager.Views;
+                    foreach (IView view in views)
+                    {
+                        ISymbols2DContainer symbols2DContainer = (ISymbols2DContainer)view;
+                        IDrawingTables drawingTables = symbols2DContainer.DrawingTables;
+                        foreach (IDrawingTable drawingTable in drawingTables)
                         {
-                            tableSpec.Add(drawingTable);
+                            ITable table = (ITable)drawingTable;
+                            IText text = (IText)table.Cell[0, 0].Text;
+                            if (text.Str.Trim().IndexOf("Спецификация стали") != -1)
+                            {
+                                tableSpec.Add(drawingTable);
+                            }
                         }
                     }
-                }
 
-                if (tableSpec.Count > 1)
-                {
-                    kompas.Quit();
-                    PBExtraction_Value = 0;
-                    Info = "Отменено";
-                    return;
-                }
-                #endregion
-
-                #region Заполняем таблицу
-                string mark = "Б1";
-                ITable table1 = (ITable)tableSpec[0];
-                for (int i = 3; i < table1.RowsCount; i++)
-                {
-                    IText text = (IText)table1.Cell[i, 0].Text;
-                    if (data.ContainsKey(mark))
+                    if (tableSpec.Count > 1)
                     {
-                        if (data[mark].ContainsKey(text.Str))
+                        kompas.Quit();
+                        PBExtraction_Value = 0;
+                        Info = "Отменено";
+                        return;
+                    }
+                    #endregion
+
+                    #region Заполняем таблицу
+                    ITable table1 = (ITable)tableSpec[0];
+                    for (int i = 3; i < table1.RowsCount; i++)
+                    {
+                        IText text = (IText)table1.Cell[i, 0].Text;
+                        if (ExcelToSpecKompas_MarksPos.ContainsKey(mark))
                         {
-                            ((IText)table1.Cell[i, 4].Text).Str = data[mark][text.Str][0];
-                            ((IText)table1.Cell[i, 5].Text).Str = data[mark][text.Str][1];
-                            ((IText)table1.Cell[i, 6].Text).Str = data[mark][text.Str][2];
-                            ((IText)table1.Cell[i, 7].Text).Str = data[mark][text.Str][3];
+                            if (ExcelToSpecKompas_MarksPos[mark].ContainsKey(text.Str))
+                            {
+                                ((IText)table1.Cell[i, 4].Text).Str = ExcelToSpecKompas_MarksPos[mark][text.Str][0];
+                                ((IText)table1.Cell[i, 5].Text).Str = ExcelToSpecKompas_MarksPos[mark][text.Str][1];
+                                ((IText)table1.Cell[i, 6].Text).Str = ExcelToSpecKompas_MarksPos[mark][text.Str][2];
+                                ((IText)table1.Cell[i, 7].Text).Str = ExcelToSpecKompas_MarksPos[mark][text.Str][3];
+                            }
                         }
                     }
+                    tableSpec[0].Update();
+                    kompasDocuments2D.Close(DocumentCloseOptions.kdSaveChanges);
+                    #endregion
                 }
-                tableSpec[0].Update();
-                kompasDocuments2D.Close(DocumentCloseOptions.kdSaveChanges);
-                #endregion
-
                 kompas.Quit();
-            });
+                if (LogWrite != "")
+                {
+                    LogWrite += "Запись в спецификации завершилась с ошибками.";
+                }
+                else
+                {
+                    LogWrite += "Запись в спецификации завершилась.";
+                }
+            }));
         }
 
         #endregion
