@@ -1401,7 +1401,7 @@ namespace PositionApplicability.ViewModels
                 foreach (string mark in ExcelToSpecKompas_MarksPos.Keys)
                 {
                     string pathAssemble = "";
-                    string[] paths = Directory.GetFiles(PathFolderAssembly, $"* {mark}*.cdw", searchOptionFill).ToArray<string>();
+                    string[] paths = Directory.GetFiles(PathFolderAssembly, $"* {mark}.cdw", searchOptionFill).ToArray<string>();
                     if (paths.Length == 0)
                     {
                         LogWrite += $"Ошибка: не найден файл марки {mark}\n";
