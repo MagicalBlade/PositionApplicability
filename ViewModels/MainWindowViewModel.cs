@@ -49,6 +49,8 @@ namespace PositionApplicability.ViewModels
         [ObservableProperty]
         private bool _isAllDirectoryFill = Properties.Settings.Default.IsAllDirectoryFill;
         [ObservableProperty]
+        private string? _pathFile;
+        [ObservableProperty]
         private string? _info;
         /// <summary>
         /// ProgressBar извлечение позиций
@@ -79,6 +81,9 @@ namespace PositionApplicability.ViewModels
         [ObservableProperty]
         [NotifyCanExecuteChangedFor(nameof(OpenLogCommand))]
         private List<string> _log = new();
+
+        [ObservableProperty]
+        private string _logWrite = "";
 
         #region Нумерация сборок
         /// <summary>
@@ -1248,8 +1253,94 @@ namespace PositionApplicability.ViewModels
 
         }
         #endregion
+
+        #region Запись данных из excel файла в спецификацию в чертеже компаса
+        /// <summary>
+        /// Чтение excel файла
+        /// </summary>
+        /// <param name="token"></param>
+        /// <returns></returns>
         [RelayCommand(IncludeCancelCommand = true)]
-        private async Task WritetoSpec(CancellationToken token)
+        private async Task ExcelToSpecKompas_ReadExcel (CancellationToken token)
+        {
+            LogWrite = "";
+            string pathexcel = "";
+            string sheetname = "Позиции";
+            OpenFileDialog dialog = new()
+            {
+                Filter = "excel files(*.xlsx)|*.xlsx"
+            };
+            if (dialog.ShowDialog() == DialogResult.OK)
+            {
+                pathexcel = dialog.FileName;
+            }
+            await Task.Run(() =>
+            {
+                if (!File.Exists(pathexcel))
+                {
+                    LogWrite += $"Ошибка: не найден - {pathexcel}";
+                    return;
+                }
+                Dictionary<string, Dictionary<string, string[]>> data = new(); //Key = марка, Key во второс словаре = позиция
+                var workbook = new XLWorkbook(pathexcel);
+                if (workbook == null)
+                {
+                    LogWrite += $"Ошибка: не удалось открыть - {pathexcel}";
+                    return;
+                }
+                workbook.TryGetWorksheet(sheetname, out IXLWorksheet? ws);
+                if (ws == null)
+                {
+                    LogWrite += $"Ошибка: не найден лист с именем - {sheetname}" ;
+                    return;
+                }
+                for (int i = 3; i < ws.LastRowUsed().RowNumber() + 1; i++)
+                {
+                    string keyMark = ws.Cell(i, 11).GetValue<string>();
+                    string key_Pos = ws.Cell(i, 1).GetValue<string>();
+                    if (data.ContainsKey(keyMark))
+                    {
+                        if (data[keyMark].ContainsKey(key_Pos))
+                        {
+                            LogWrite += $"Ошибка: В марке {keyMark} несколько позиций {key_Pos}\n";
+                        }
+                        else
+                        {
+                            data[keyMark].Add(key_Pos, new string[]
+                            {
+                                 ws.Cell(i, 5).GetValue<string>(),
+                                 ws.Cell(i, 6).GetValue<string>(),
+                                 ws.Cell(i, 7).GetValue<string>(),
+                                 ws.Cell(i, 8).GetValue<string>(),
+                            });
+                        }
+                    }
+                    else
+                    {
+                        data.Add(keyMark, new Dictionary<string, string[]>() {{ key_Pos,  new string[]
+                            {
+                                 ws.Cell(i, 5).GetValue<string>(),
+                                 ws.Cell(i, 6).GetValue<string>(),
+                                 ws.Cell(i, 7).GetValue<string>(),
+                                 ws.Cell(i, 8).GetValue<string>(),
+                            } } });
+                    }
+                }
+
+                if (LogWrite != "")
+                {
+                    LogWrite += "Загрузка Excel файла завершилась с ошибками.";
+                }
+                else
+                {
+                    LogWrite += "Загрузка Excel файла завершилась.";
+                }
+            });
+
+        }
+
+        [RelayCommand(IncludeCancelCommand = true)]
+        private async Task ExcelToSpecKompas_WriteToSpec(CancellationToken token)
         {
             string path = "d:\\C#\\For project\\PositionApplicability\\До заполнение спецификации\\Примеры от Павла\\Блок Б1.cdw";
             await Task.Run(() =>
@@ -1293,8 +1384,8 @@ namespace PositionApplicability.ViewModels
                     }
                 }
                 #endregion
-                
-                
+
+
                 #region Ищем таблицу "Спецификация стали"
                 List<IDrawingTable> tableSpec = new();
                 Type? kompasType = Type.GetTypeFromProgID("Kompas.Application.5", true);
@@ -1362,10 +1453,11 @@ namespace PositionApplicability.ViewModels
                 kompas.Quit();
             });
         }
-        
+
+        #endregion
 
 
-            [RelayCommand]
+        [RelayCommand]
         private void OpenTxT(string file)
         {
             Info = "";
@@ -1756,5 +1848,23 @@ namespace PositionApplicability.ViewModels
                 Info = $"Не удалось сохранить файл журнала";
             }
         }
+
+        /// <summary>
+        /// Получить путь к файлу
+        /// </summary>
+        /// <param name="filter"></param>
+        [RelayCommand]
+        private void GetPathFile(string filter)
+        {
+            OpenFileDialog dialog = new()
+            {
+                Filter = filter
+            };
+            if (dialog.ShowDialog() == DialogResult.OK)
+            {
+                PathFile = dialog.FileName;
+            }
+        }
+
     }
 }
