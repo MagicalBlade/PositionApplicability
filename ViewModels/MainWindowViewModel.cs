@@ -63,6 +63,11 @@ namespace PositionApplicability.ViewModels
         [ObservableProperty]
         private double _pBFill_Value = 0;
         /// <summary>
+        /// Заполняемость прогресс бара
+        /// </summary>
+        [ObservableProperty]
+        private double _progressBar_Value = 0;
+        /// <summary>
         /// Массив позиций с данными по ним
         /// </summary>
         [ObservableProperty]
@@ -1268,14 +1273,14 @@ namespace PositionApplicability.ViewModels
         /// </summary>
         /// <param name="token"></param>
         /// <returns></returns>
-        [RelayCommand(IncludeCancelCommand = true)]
-        private async Task ExcelToSpecKompas_ReadExcel (CancellationToken token)
+        [RelayCommand]
+        private async Task ExcelToSpecKompas_ReadExcel ()
         {
-            LogWrite = "";
+            LogWrite = "Началась загрузка Excel файла...\n";
             ExcelToSpecKompas_MarksPos.Clear();
+            ProgressBar_Value = 1;
             string pathexcel = "";
             string sheetname = "Позиции";
-            
             OpenFileDialog dialog = new()
             {
                 Filter = "excel files(*.xlsx)|*.xlsx"
@@ -1288,6 +1293,7 @@ namespace PositionApplicability.ViewModels
             {
                 return;
             }
+            ProgressBar_Value = 5;
             await Task.Run(() =>
             {
                 if (!File.Exists(pathexcel))
@@ -1307,8 +1313,11 @@ namespace PositionApplicability.ViewModels
                     LogWrite += $"Ошибка: не найден лист с именем - {sheetname}" ;
                     return;
                 }
+                ProgressBar_Value = 10;
+                double indexPB = 90.0 / (ws.LastRowUsed().RowNumber() - 2);
                 for (int i = 3; i < ws.LastRowUsed().RowNumber() + 1; i++)
                 {
+                    ProgressBar_Value += indexPB;
                     string keyMark = ws.Cell(i, 11).GetValue<string>();
                     string key_Pos = ws.Cell(i, 1).GetValue<string>();
                     if (ExcelToSpecKompas_MarksPos.ContainsKey(keyMark))
@@ -1339,15 +1348,8 @@ namespace PositionApplicability.ViewModels
                             } } });
                     }
                 }
-
-                if (LogWrite != "")
-                {
-                    LogWrite += "Загрузка Excel файла завершилась с ошибками.";
-                }
-                else
-                {
-                    LogWrite += "Загрузка Excel файла завершилась.";
-                }
+                ProgressBar_Value = 100;
+                LogWrite += $"Загрузка Excel файла завершилась.";
             });
 
         }

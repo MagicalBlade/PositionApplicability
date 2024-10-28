@@ -157,17 +157,18 @@
 
             <TabItem Header="Запись в спецификацию">
                 <StackPanel Grid.Row="0" Orientation="Vertical">
+                    <Button Content="Загрузить Excel файл" Padding="5,5" Command="{Binding ExcelToSpecKompas_ReadExcelCommand}"/>
                     <DockPanel>
                         <Button Content="Указать путь к файлам сборок:" Padding="3" Margin="3"  Command="{Binding OpenFolderDialogAssemblyCommand}"/>
                         <TextBox Height="25" Padding="3" Margin="3" Text="{Binding PathFolderAssembly}"/>
                     </DockPanel>
-                    <ProgressBar Height="25" Value = "{Binding PBExtraction_Value}"/>
+                    <ProgressBar Height="25" Value = "{Binding ProgressBar_Value}"/>
                     <StackPanel Orientation="Horizontal" HorizontalAlignment="Center">
                         <CheckBox Content="В подпапках" IsChecked="{Binding IsAllDirectoryExtraction}" VerticalContentAlignment="Center" VerticalAlignment="Center" Padding="3" Margin="3"/>
-                        <Button Content="Загрузить Excel файл" Padding="5,5" Command="{Binding ExcelToSpecKompas_ReadExcelCommand}"/>
                         <Button Content="Записать в спецификацию Компаса" Padding="5,5" Command="{Binding ExcelToSpecKompas_WriteToSpecCommand}"/>
                         <Button Content="Отмена" HorizontalAlignment="Center" Padding="3" Margin="3" Command="{Binding ExcelToSpecKompas_WriteToSpecCancelCommand}"/>
                     </StackPanel>
+                    <TextBlock Text="Журнал работы"/>
                     <TextBox Text="{Binding LogWrite}" Height="100" VerticalContentAlignment="Top" VerticalScrollBarVisibility="Auto"/>
                 </StackPanel>
             </TabItem>
