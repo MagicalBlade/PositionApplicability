@@ -1357,7 +1357,8 @@ namespace PositionApplicability.ViewModels
         [RelayCommand(IncludeCancelCommand = true)]
         private async Task ExcelToSpecKompas_WriteToSpec(CancellationToken token)
         {
-            LogWrite = "";
+            LogWrite = "Начало записи в спецификацию...\n";
+            ProgressBar_Value = 1;
             if (ExcelToSpecKompas_MarksPos.Count == 0)
             {
                 LogWrite += "Ошибка: загрузите Excel файл";
@@ -1368,7 +1369,7 @@ namespace PositionApplicability.ViewModels
                 LogWrite += "Ошибка: не найден путь к файлам сборок";
                 return;
             }
-            List<string> pathsAssemble = new List<string>();
+            List<string> pathsAssemble = new();
 
             await Task.Run((Action)(() =>
             {
@@ -1392,16 +1393,25 @@ namespace PositionApplicability.ViewModels
                     LogWrite += "Ошибка: не получилось запустить Компас";
                     return;
                 }
+                ProgressBar_Value = 10;
                 if (token.IsCancellationRequested)
                 {
                     kompas.Quit();
-                    PBExtraction_Value = 0;
+                    ProgressBar_Value = 0;
                     Info = "Отменено";
                     return;
                 } 
                 #endregion
                 foreach (string mark in ExcelToSpecKompas_MarksPos.Keys)
                 {
+                    if (token.IsCancellationRequested)
+                    {
+                        kompas.Quit();
+                        ProgressBar_Value = 0;
+                        Info = "Отменено";
+                        return;
+                    }
+                    ProgressBar_Value += 90.0 / ExcelToSpecKompas_MarksPos.Keys.Count;
                     string pathAssemble = "";
                     string[] paths = Directory.GetFiles(PathFolderAssembly, $"* {mark}.cdw", searchOptionFill).ToArray<string>();
                     if (paths.Length == 0)
@@ -1446,16 +1456,14 @@ namespace PositionApplicability.ViewModels
                             }
                         }
                     }
-
                     if (tableSpec.Count > 1)
                     {
                         kompas.Quit();
-                        PBExtraction_Value = 0;
+                        ProgressBar_Value = 0;
                         Info = "Отменено";
                         return;
                     }
                     #endregion
-
                     #region Заполняем таблицу
                     ITable table1 = (ITable)tableSpec[0];
                     for (int i = 3; i < table1.RowsCount; i++)
@@ -1477,14 +1485,8 @@ namespace PositionApplicability.ViewModels
                     #endregion
                 }
                 kompas.Quit();
-                if (LogWrite != "")
-                {
-                    LogWrite += "Запись в спецификации завершилась с ошибками.";
-                }
-                else
-                {
-                    LogWrite += "Запись в спецификации завершилась.";
-                }
+                ProgressBar_Value = 100;
+                LogWrite += "Запись в спецификации завершилась.";
             }));
         }
 
