@@ -94,7 +94,7 @@ namespace PositionApplicability.ViewModels
         /// <summary>
         /// Данные из экселя. Список марок со списком позиций в этих марках и данными этих позиций
         /// </summary>
-        private Dictionary<string, Dictionary<string, string[]>> ExcelToSpecKompas_MarksPos = new(); //Key = марка, Key во второс словаре = позиция
+        private Dictionary<string, List<string[]>> ExcelToSpecKompas_MarksPos = new(); //Key = марка
 
         #endregion
 
@@ -1322,30 +1322,34 @@ namespace PositionApplicability.ViewModels
                     string key_Pos = ws.Cell(i, 1).GetValue<string>();
                     if (ExcelToSpecKompas_MarksPos.ContainsKey(keyMark))
                     {
-                        if (ExcelToSpecKompas_MarksPos[keyMark].ContainsKey(key_Pos))
+                        ExcelToSpecKompas_MarksPos[keyMark].Add(new string[]
                         {
-                            LogWrite += $"Ошибка: В марке {keyMark} несколько позиций {key_Pos}\n";
-                        }
-                        else
-                        {
-                            ExcelToSpecKompas_MarksPos[keyMark].Add(key_Pos, new string[]
-                            {
+                                 ws.Cell(i, 1).GetValue<string>(),
+                                 ws.Cell(i, 2).GetValue<string>(),
+                                 ws.Cell(i, 3).GetValue<string>(),
+                                 ws.Cell(i, 4).GetValue<string>(),
                                  ws.Cell(i, 5).GetValue<string>(),
                                  ws.Cell(i, 6).GetValue<string>(),
                                  ws.Cell(i, 7).GetValue<string>(),
                                  ws.Cell(i, 8).GetValue<string>(),
-                            });
-                        }
+                                 ws.Cell(i, 9).GetValue<string>(),
+                                 ws.Cell(i, 10).GetValue<string>(),
+                        });
                     }
                     else
                     {
-                        ExcelToSpecKompas_MarksPos.Add(keyMark, new Dictionary<string, string[]>() {{ key_Pos,  new string[]
-                            {
+                        ExcelToSpecKompas_MarksPos.Add(keyMark, new List<string[]>{ new string[] {
+                                 ws.Cell(i, 1).GetValue<string>(),
+                                 ws.Cell(i, 2).GetValue<string>(),
+                                 ws.Cell(i, 3).GetValue<string>(),
+                                 ws.Cell(i, 4).GetValue<string>(),
                                  ws.Cell(i, 5).GetValue<string>(),
                                  ws.Cell(i, 6).GetValue<string>(),
                                  ws.Cell(i, 7).GetValue<string>(),
                                  ws.Cell(i, 8).GetValue<string>(),
-                            } } });
+                                 ws.Cell(i, 9).GetValue<string>(),
+                                 ws.Cell(i, 10).GetValue<string>(),
+                             }});
                     }
                 }
                 ProgressBar_Value = 100;
@@ -1373,6 +1377,18 @@ namespace PositionApplicability.ViewModels
 
             await Task.Run((() =>
             {
+                string pathTable = $"{Directory.GetCurrentDirectory()}\\Resources\\Спецификация стали.frw";
+                string pathTableOneMark = $"{Directory.GetCurrentDirectory()}\\Resources\\Спецификация стали одна марка.frw";
+                if (!File.Exists(pathTable))
+                {
+                    LogWrite += "Ошибка: не найдена заготовка таблицы \"Спецификация стали\"";
+                    return;
+                }
+                if (!File.Exists(pathTableOneMark))
+                {
+                    LogWrite += "Ошибка: не найдена заготовка таблицы \"Спецификация стали одна марка\"";
+                    return;
+                }
                 SearchOption searchOptionFill;
                 if (IsAllDirectoryFill)
                 {
@@ -1430,57 +1446,146 @@ namespace PositionApplicability.ViewModels
                         LogWrite += $"Ошибка: не найден файл марки {mark}.\n";
                         continue;
                     }
-                    #region Ищем таблицу "Спецификация стали"
-                    List<IDrawingTable> tableSpec = new();
                     IApplication application = (IApplication)kompas.ksGetApplication7();
                     IDocuments documents = application.Documents;
                     IKompasDocument2D kompasDocuments2D = (IKompasDocument2D)documents.Open(pathAssemble, false, false);
+                    IKompasDocument2D1 kompasDocuments2D1 = (IKompasDocument2D1)kompasDocuments2D;
                     if (kompasDocuments2D == null)
                     {
-                        LogWrite += $"Ошибка: найдено больше одного файла марки {mark}. Спецификация в данной марке не будет заполнена.\n";
+                        LogWrite += $"Ошибка: не удалось открыть чертеж {pathAssemble}.\n";
                         continue;
                     }
                     IViewsAndLayersManager viewsAndLayersManager = kompasDocuments2D.ViewsAndLayersManager;
                     IViews views = viewsAndLayersManager.Views;
-                    foreach (IView view in views)
-                    {
-                        ISymbols2DContainer symbols2DContainer = (ISymbols2DContainer)view;
-                        IDrawingTables drawingTables = symbols2DContainer.DrawingTables;
-                        foreach (IDrawingTable drawingTable in drawingTables)
-                        {
-                            ITable table = (ITable)drawingTable;
-                            IText text = (IText)table.Cell[0, 0].Text;
-                            if (text.Str.Trim().IndexOf("Спецификация стали") != -1)
-                            {
-                                tableSpec.Add(drawingTable);
-                            }
-                        }
-                    }
-                    if (tableSpec.Count > 1)
-                    {
-                        kompas.Quit();
-                        ProgressBar_Value = 0;
-                        Info = "Отменено";
-                        return;
-                    }
-                    #endregion
+                    IView view = views.View["Системный вид"];
+                    view.Current = true;
+                    view.Update();
+
+                    IDrawingGroups drawingGroups = kompasDocuments2D1.DrawingGroups;
+                    IDrawingGroup drawingGroup = drawingGroups.Add(true, "");
+
+                    drawingGroup.ReadFragment(pathTable,true, 0, 0, 1, 0, false);
+                    ksDocument2D ksDocument2D = kompas.TransferInterface(kompasDocuments2D, 1, 0);
+                    IDrawingTable tableSpec = drawingGroup.Objects[0]; //Таблица
+
                     #region Заполняем таблицу
-                    ITable table1 = (ITable)tableSpec[0];
-                    for (int i = 3; i < table1.RowsCount; i++)
+                    ITable table = (ITable)tableSpec;
+                    for (int i = 0; i < ExcelToSpecKompas_MarksPos[mark].Count; i++)
                     {
-                        IText text = (IText)table1.Cell[i, 0].Text;
-                        if (ExcelToSpecKompas_MarksPos.ContainsKey(mark))
-                        {
-                            if (ExcelToSpecKompas_MarksPos[mark].ContainsKey(text.Str))
-                            {
-                                ((IText)table1.Cell[i, 4].Text).Str = ExcelToSpecKompas_MarksPos[mark][text.Str][0];
-                                ((IText)table1.Cell[i, 5].Text).Str = ExcelToSpecKompas_MarksPos[mark][text.Str][1];
-                                ((IText)table1.Cell[i, 6].Text).Str = ExcelToSpecKompas_MarksPos[mark][text.Str][2];
-                                ((IText)table1.Cell[i, 7].Text).Str = ExcelToSpecKompas_MarksPos[mark][text.Str][3];
-                            }
-                        }
+                        ((IText)table.Cell[i + 3, 0].Text).Str = ExcelToSpecKompas_MarksPos[mark][i][0];
+                        ((IText)table.Cell[i + 3, 1].Text).Str = ExcelToSpecKompas_MarksPos[mark][i][1];
+                        ((IText)table.Cell[i + 3, 2].Text).Str = ExcelToSpecKompas_MarksPos[mark][i][2];
+                        ((IText)table.Cell[i + 3, 3].Text).Str = ExcelToSpecKompas_MarksPos[mark][i][3];
+                        ((IText)table.Cell[i + 3, 4].Text).Str = ExcelToSpecKompas_MarksPos[mark][i][4];
+                        ((IText)table.Cell[i + 3, 5].Text).Str = ExcelToSpecKompas_MarksPos[mark][i][5];
+                        ((IText)table.Cell[i + 3, 6].Text).Str = ExcelToSpecKompas_MarksPos[mark][i][6];
+                        ((IText)table.Cell[i + 3, 7].Text).Str = ExcelToSpecKompas_MarksPos[mark][i][7];
+                        ((IText)table.Cell[i + 3, 8].Text).Str = ExcelToSpecKompas_MarksPos[mark][i][8];
+                        ((IText)table.Cell[i + 3, 9].Text).Str = ExcelToSpecKompas_MarksPos[mark][i][9];
+                        table.AddRow(i + 3, true);
                     }
-                    tableSpec[0].Update();
+                    tableSpec.Update();
+                    ksRectParam ksRectangleParam = kompas.GetParamStruct(15);
+                    ksMathPointParam botPoint = ksRectangleParam.GetpBot();
+                    ksDocument2D.ksGetObjGabaritRect(drawingGroup.Reference, ksRectangleParam);
+
+                    double xSetPlacementTable = 0;
+                    double ySetPlacementTable = 0;
+                    ILayoutSheets layoutSheets = kompasDocuments2D.LayoutSheets;
+                    ILayoutSheet layoutSheet = layoutSheets.ItemByNumber[1];
+                    // Получение листа в старых версиях чертежа. В них видимо нет возможности получить лист по номеру листа.
+                    if (layoutSheet == null)
+                    {
+                        foreach (ILayoutSheet item in layoutSheets)
+                        {
+                            layoutSheet = item;
+                            break;
+                        }
+                    };
+                    ISheetFormat sheetFormat = layoutSheet.Format;
+                    switch (sheetFormat.Format)
+                    {
+                        case Kompas6Constants.ksDocumentFormatEnum.ksFormatA0:
+                            if (sheetFormat.VerticalOrientation)
+                            {
+                                xSetPlacementTable = 836;
+                                ySetPlacementTable = 1184;
+                            }
+                            else
+                            {
+                                xSetPlacementTable = 1184;
+                                ySetPlacementTable = 836;
+                            }
+                            break;
+                        case Kompas6Constants.ksDocumentFormatEnum.ksFormatA1:
+                            if (sheetFormat.VerticalOrientation)
+                            {
+                                xSetPlacementTable = 589;
+                                ySetPlacementTable = 836;
+                            }
+                            else
+                            {
+                                xSetPlacementTable = 836;
+                                ySetPlacementTable = 589;
+                            }
+                            break;
+                        case Kompas6Constants.ksDocumentFormatEnum.ksFormatA2:
+                            if (sheetFormat.VerticalOrientation)
+                            {
+                                xSetPlacementTable = 415;
+                                ySetPlacementTable = 589;
+                            }
+                            else
+                            {
+                                xSetPlacementTable = 589;
+                                ySetPlacementTable = 415;
+                            }
+                            break;
+                        case Kompas6Constants.ksDocumentFormatEnum.ksFormatA3:
+                            if (sheetFormat.VerticalOrientation)
+                            {
+                                xSetPlacementTable = 292 * sheetFormat.FormatMultiplicity;
+                                ySetPlacementTable = 415;
+                            }
+                            else
+                            {
+                                xSetPlacementTable = 415;
+                                ySetPlacementTable = 292 * sheetFormat.FormatMultiplicity;
+                            }
+                            break;
+                        case Kompas6Constants.ksDocumentFormatEnum.ksFormatA4:
+                            if (sheetFormat.VerticalOrientation)
+                            {
+                                xSetPlacementTable = 205;
+                                ySetPlacementTable = 292;
+                            }
+                            else
+                            {
+                                xSetPlacementTable = 292;
+                                ySetPlacementTable = 205;
+                            }
+                            break;
+                        case Kompas6Constants.ksDocumentFormatEnum.ksFormatA5:
+                            if (sheetFormat.VerticalOrientation)
+                            {
+                                xSetPlacementTable = 143.5;
+                                ySetPlacementTable = 205;
+                            }
+                            else
+                            {
+                                xSetPlacementTable = 205;
+                                ySetPlacementTable = 143;
+                            }
+                            break;
+                        case Kompas6Constants.ksDocumentFormatEnum.ksFormatUser:
+                            xSetPlacementTable = sheetFormat.FormatWidth - 5;
+                            ySetPlacementTable = sheetFormat.FormatHeight - 5;
+                            break;
+                        default:
+                            break;
+                    }
+                    ksDocument2D.ksMoveObj(drawingGroup.Reference, xSetPlacementTable, ySetPlacementTable);
+                    drawingGroup.Store();
                     kompasDocuments2D.Close(DocumentCloseOptions.kdSaveChanges);
                     #endregion
                 }
