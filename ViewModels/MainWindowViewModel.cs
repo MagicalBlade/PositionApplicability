@@ -1371,7 +1371,7 @@ namespace PositionApplicability.ViewModels
             }
             List<string> pathsAssemble = new();
 
-            await Task.Run((Action)(() =>
+            await Task.Run((() =>
             {
                 SearchOption searchOptionFill;
                 if (IsAllDirectoryFill)
