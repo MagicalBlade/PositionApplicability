@@ -1301,7 +1301,7 @@ namespace PositionApplicability.ViewModels
                     LogWrite += $"Ошибка: не найден - {pathexcel}";
                     return;
                 }
-                var workbook = new XLWorkbook(pathexcel);
+                var workbook = new XLWorkbook(pathexcel); //TODO сделать проверку на возможность открыть файл
                 if (workbook == null)
                 {
                     LogWrite += $"Ошибка: не удалось открыть - {pathexcel}";
@@ -1472,6 +1472,11 @@ namespace PositionApplicability.ViewModels
                     ITable table = (ITable)tableSpec;
                     for (int i = 0; i < ExcelToSpecKompas_MarksPos[mark].Count; i++)
                     {
+                        if (ExcelToSpecKompas_MarksPos[mark][i][0] == "на сварные швы:")
+                        {
+                            ((IText)table.Cell[table.RowsCount - 1, 7].Text).Str = ExcelToSpecKompas_MarksPos[mark][i][7];
+                            continue;
+                        }
                         ((IText)table.Cell[i + 3, 0].Text).Str = ExcelToSpecKompas_MarksPos[mark][i][0];
                         ((IText)table.Cell[i + 3, 1].Text).Str = ExcelToSpecKompas_MarksPos[mark][i][1];
                         ((IText)table.Cell[i + 3, 2].Text).Str = ExcelToSpecKompas_MarksPos[mark][i][2];
@@ -1485,14 +1490,8 @@ namespace PositionApplicability.ViewModels
                         table.AddRow(i + 3, true);
                     }
                     tableSpec.Update();
-                    ksRectParam ksRectangleParam = kompas.GetParamStruct(15);
-                    ksMathPointParam botPoint = ksRectangleParam.GetpBot();
-                    ksDocument2D.ksGetObjGabaritRect(drawingGroup.Reference, ksRectangleParam);
-
-                    double xSetPlacementTable = 0;
-                    double ySetPlacementTable = 0;
                     ILayoutSheets layoutSheets = kompasDocuments2D.LayoutSheets;
-                    ILayoutSheet layoutSheet = layoutSheets.ItemByNumber[1];
+                    ILayoutSheet? layoutSheet = layoutSheets.ItemByNumber[1];
                     // Получение листа в старых версиях чертежа. В них видимо нет возможности получить лист по номеру листа.
                     if (layoutSheet == null)
                     {
@@ -1502,89 +1501,13 @@ namespace PositionApplicability.ViewModels
                             break;
                         }
                     };
-                    ISheetFormat sheetFormat = layoutSheet.Format;
-                    switch (sheetFormat.Format)
+                    if (layoutSheet == null)
                     {
-                        case Kompas6Constants.ksDocumentFormatEnum.ksFormatA0:
-                            if (sheetFormat.VerticalOrientation)
-                            {
-                                xSetPlacementTable = 836;
-                                ySetPlacementTable = 1184;
-                            }
-                            else
-                            {
-                                xSetPlacementTable = 1184;
-                                ySetPlacementTable = 836;
-                            }
-                            break;
-                        case Kompas6Constants.ksDocumentFormatEnum.ksFormatA1:
-                            if (sheetFormat.VerticalOrientation)
-                            {
-                                xSetPlacementTable = 589;
-                                ySetPlacementTable = 836;
-                            }
-                            else
-                            {
-                                xSetPlacementTable = 836;
-                                ySetPlacementTable = 589;
-                            }
-                            break;
-                        case Kompas6Constants.ksDocumentFormatEnum.ksFormatA2:
-                            if (sheetFormat.VerticalOrientation)
-                            {
-                                xSetPlacementTable = 415;
-                                ySetPlacementTable = 589;
-                            }
-                            else
-                            {
-                                xSetPlacementTable = 589;
-                                ySetPlacementTable = 415;
-                            }
-                            break;
-                        case Kompas6Constants.ksDocumentFormatEnum.ksFormatA3:
-                            if (sheetFormat.VerticalOrientation)
-                            {
-                                xSetPlacementTable = 292 * sheetFormat.FormatMultiplicity;
-                                ySetPlacementTable = 415;
-                            }
-                            else
-                            {
-                                xSetPlacementTable = 415;
-                                ySetPlacementTable = 292 * sheetFormat.FormatMultiplicity;
-                            }
-                            break;
-                        case Kompas6Constants.ksDocumentFormatEnum.ksFormatA4:
-                            if (sheetFormat.VerticalOrientation)
-                            {
-                                xSetPlacementTable = 205;
-                                ySetPlacementTable = 292;
-                            }
-                            else
-                            {
-                                xSetPlacementTable = 292;
-                                ySetPlacementTable = 205;
-                            }
-                            break;
-                        case Kompas6Constants.ksDocumentFormatEnum.ksFormatA5:
-                            if (sheetFormat.VerticalOrientation)
-                            {
-                                xSetPlacementTable = 143.5;
-                                ySetPlacementTable = 205;
-                            }
-                            else
-                            {
-                                xSetPlacementTable = 205;
-                                ySetPlacementTable = 143;
-                            }
-                            break;
-                        case Kompas6Constants.ksDocumentFormatEnum.ksFormatUser:
-                            xSetPlacementTable = sheetFormat.FormatWidth - 5;
-                            ySetPlacementTable = sheetFormat.FormatHeight - 5;
-                            break;
-                        default:
-                            break;
+                        LogWrite += $"Ошибка: не удалось найти лист {pathAssemble}.\n";
+                        continue;
                     }
-                    ksDocument2D.ksMoveObj(drawingGroup.Reference, xSetPlacementTable, ySetPlacementTable);
+                    layoutSheet.GetPlaceInsideFrames(out double left, out double top, out double right, out double bottom);
+                    ksDocument2D.ksMoveObj(drawingGroup.Reference, right, top);
                     drawingGroup.Store();
                     kompasDocuments2D.Close(DocumentCloseOptions.kdSaveChanges);
                     #endregion
