@@ -24,5 +24,11 @@ namespace PositionApplicability
         {
             InitializeComponent();
         }
+
+        private void TextBox_TextChanged(object sender, TextChangedEventArgs e)
+        {
+            TextBox? textBox = sender as TextBox;
+            textBox?.ScrollToEnd();
+        }
     }
 }

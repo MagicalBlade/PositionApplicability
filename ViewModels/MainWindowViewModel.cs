@@ -2,6 +2,7 @@
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using DocumentFormat.OpenXml.Drawing.Charts;
+using DocumentFormat.OpenXml.Office2016.Drawing.Command;
 using Kompas6API5;
 using Kompas6Constants;
 using KompasAPI7;
@@ -1509,30 +1510,25 @@ namespace PositionApplicability.ViewModels
                             ((IText)table.Cell[table.RowsCount - 1, 7].Text).Str = ExcelToSpecKompas_MarksPos[mark][i][7];
                             continue;
                         }
-                        IText text_0 = (IText)table.Cell[i + 3, 0].Text;
-                        IText text_1 = (IText)table.Cell[i + 3, 1].Text;
-                        IText text_2 = (IText)table.Cell[i + 3, 2].Text;
-                        IText text_3 = (IText)table.Cell[i + 3, 3].Text;
-                        IText text_4 = (IText)table.Cell[i + 3, 4].Text;
-                        IText text_5 = (IText)table.Cell[i + 3, 5].Text;
-                        IText text_6 = (IText)table.Cell[i + 3, 6].Text;
-                        IText text_7 = (IText)table.Cell[i + 3, 7].Text;
-                        IText text_8 = (IText)table.Cell[i + 3, 8].Text;
-                        IText text_9 = (IText)table.Cell[i + 3, 9].Text;
-
-                        text_0.Str = ExcelToSpecKompas_MarksPos[mark][i][0];
-                        text_1.Str = ExcelToSpecKompas_MarksPos[mark][i][1];
-                        text_2.Str = ExcelToSpecKompas_MarksPos[mark][i][2];
-                        text_3.Str = ExcelToSpecKompas_MarksPos[mark][i][3];
-                        text_4.Str = ExcelToSpecKompas_MarksPos[mark][i][4];
-                        text_5.Str = ExcelToSpecKompas_MarksPos[mark][i][5];
-                        text_6.Str = ExcelToSpecKompas_MarksPos[mark][i][6];
-                        text_7.Str = ExcelToSpecKompas_MarksPos[mark][i][7];
-                        text_8.Str = ExcelToSpecKompas_MarksPos[mark][i][8];
-                        text_9.Str = ExcelToSpecKompas_MarksPos[mark][i][9];
+                        for (int j = 0; j < table.ColumnsCount; j++)
+                        {
+                            ITableCell? tableCell = table.Cell[i + 3, j];
+                            if (tableCell == null)
+                            {
+                                LogWrite += $"Ошибка: глобальная ошибка. Ячейка стандартной таблицы {pathTable} вернула NULL в файле {pathAssemble}. Работа прекращена.";
+                                ProgressBar_Value = 0;
+                                kompas.Quit();
+                                return;
+                            }
+                            else
+                            {
+                                ((IText)tableCell.Text).Str = ExcelToSpecKompas_MarksPos[mark][i][j];
+                            }
+                        }
 
                         table.AddRow(i + 3, true);
                     }
+                    
                     tableSpec.Update();
                     ILayoutSheets layoutSheets = kompasDocuments2D.LayoutSheets;
                     ILayoutSheet? layoutSheet = layoutSheets.ItemByNumber[1];
@@ -1553,6 +1549,12 @@ namespace PositionApplicability.ViewModels
                     layoutSheet.GetPlaceInsideFrames(out double left, out double top, out double right, out double bottom);
                     ksDocument2D.ksMoveObj(drawingGroup.Reference, right, top);
                     drawingGroup.Store();
+                    kompasDocuments2D.Save();
+                    if (kompasDocuments2D.Changed)
+                    {
+                        LogWrite += $"Ошибка: не удалось сохранить файл {pathAssemble}. Возможно нет права на его редактирование " +
+                        $"или он был открыт во время работы программы\n";
+                    }
                     kompasDocuments2D.Close(DocumentCloseOptions.kdSaveChanges);
                     #endregion
                 }
@@ -1560,6 +1562,7 @@ namespace PositionApplicability.ViewModels
                 ProgressBar_Value = 100;
                 LogWrite += "Запись в спецификации завершилась.";
             }));
+            
         }
 
         #endregion

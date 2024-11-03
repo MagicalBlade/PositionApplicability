@@ -169,7 +169,7 @@
                         <Button Content="Отмена" HorizontalAlignment="Center" Padding="3" Margin="3" Command="{Binding ExcelToSpecKompas_WriteToSpecCancelCommand}"/>
                     </StackPanel>
                     <TextBlock Text="Журнал работы"/>
-                    <TextBox Text="{Binding LogWrite}" Height="100" VerticalContentAlignment="Top" VerticalScrollBarVisibility="Auto"/>
+                    <TextBox Text="{Binding LogWrite}" Height="100" VerticalContentAlignment="Top" VerticalScrollBarVisibility="Auto" IsReadOnly="True" TextWrapping="WrapWithOverflow" TextChanged="TextBox_TextChanged"/>
                 </StackPanel>
             </TabItem>
 
