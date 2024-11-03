@@ -1302,7 +1302,16 @@ namespace PositionApplicability.ViewModels
                     LogWrite += $"Ошибка: не найден - {pathexcel}";
                     return;
                 }
-                var workbook = new XLWorkbook(pathexcel); //TODO сделать проверку на возможность открыть файл
+                XLWorkbook? workbook = null;
+                try
+                {
+                    workbook = new XLWorkbook(pathexcel); //TODO сделать проверку на возможность открыть файл
+                }
+                catch (Exception)
+                {
+                    LogWrite += $"Ошибка: закройте загружаеммый Ecxek файл - {pathexcel}";
+                    return;
+                }
                 if (workbook == null)
                 {
                     LogWrite += $"Ошибка: не удалось открыть - {pathexcel}";
