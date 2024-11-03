@@ -1361,8 +1361,6 @@ namespace PositionApplicability.ViewModels
         [RelayCommand(IncludeCancelCommand = true)]
         private async Task ExcelToSpecKompas_WriteToSpec(CancellationToken token)
         {
-            LogWrite = "Начало записи в спецификацию...\n";
-            ProgressBar_Value = 1;
             if (ExcelToSpecKompas_ReadExcelCommand.IsRunning)
             {
                 LogWrite += "Ошибка: дождитесь завершения загрузки Excel файла\n";
@@ -1375,6 +1373,8 @@ namespace PositionApplicability.ViewModels
                 ProgressBar_Value = 0;
                 return;
             }
+            LogWrite = "Начало записи в спецификацию...\n";
+            ProgressBar_Value = 1;
             if (!Directory.Exists(PathFolderAssembly))
             {
                 LogWrite += "Ошибка: не найден путь к файлам сборок";
@@ -1382,9 +1382,9 @@ namespace PositionApplicability.ViewModels
                 return;
             }
             List<string> pathsAssemble = new();
-
             await Task.Run((() =>
             {
+                string textfirstcell = "Спецификация стали";
                 string pathTable = $"{Directory.GetCurrentDirectory()}\\Resources\\Спецификация стали.frw";
                 string pathTableOneMark = $"{Directory.GetCurrentDirectory()}\\Resources\\Спецификация стали одна марка.frw";
                 if (!File.Exists(pathTable))
@@ -1477,6 +1477,19 @@ namespace PositionApplicability.ViewModels
                     view.Current = true;
                     view.Update();
 
+                    #region Поиск и удаление таблицы "Спецификация металла"
+                    ISymbols2DContainer symbols2DContainer = (ISymbols2DContainer)view;
+                    IDrawingTables drawingTables = symbols2DContainer.DrawingTables;
+                    foreach (IDrawingTable item in drawingTables)
+                    {
+                        ITable tableSearch = (ITable)item;
+                        if (((IText)tableSearch.Cell[0, 0].Text).Str.Trim() == textfirstcell)
+                        {
+                            item.Delete();
+                        }
+                    }
+                    #endregion
+
                     IDrawingGroups drawingGroups = kompasDocuments2D1.DrawingGroups;
                     IDrawingGroup drawingGroup = drawingGroups.Add(true, "");
                     if (ExcelToSpecKompas_MarksPos[mark].Count == 1)
@@ -1508,6 +1521,15 @@ namespace PositionApplicability.ViewModels
                         kompas.Quit();
                         return;
                     }
+                    // Создание строк таблицы
+                    for (int i = 0; i < ExcelToSpecKompas_MarksPos[mark].Count - 2; i++)
+                    {
+                        table.AddRow(i + 3, true);
+                    }
+                    //Меняем стил промежуточных горизонтальных линий на тонкий
+                    ITableRange tableRange = table.Range[3, 0, table.RowsCount - 2, table.ColumnsCount];
+                    ICellBoundaries cellBoundaries = tableRange.CellsBoundaries;
+                    cellBoundaries.LineStyle[ksCellBoundariesEnum.ksCBHorisontMidleBorder] = ksCurveStyleEnum.ksCSThin;
                     for (int i = 0; i < ExcelToSpecKompas_MarksPos[mark].Count; i++)
                     {
                         if (ExcelToSpecKompas_MarksPos[mark][i][0] == "на сварные швы:")
@@ -1530,8 +1552,6 @@ namespace PositionApplicability.ViewModels
                                 ((IText)tableCell.Text).Str = ExcelToSpecKompas_MarksPos[mark][i][j];
                             }
                         }
-
-                        table.AddRow(i + 3, true);
                     }
                     
                     tableSpec.Update();
@@ -1569,7 +1589,6 @@ namespace PositionApplicability.ViewModels
             }));
             
         }
-
         #endregion
 
 
