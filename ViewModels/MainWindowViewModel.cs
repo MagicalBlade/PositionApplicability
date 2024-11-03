@@ -1275,7 +1275,7 @@ namespace PositionApplicability.ViewModels
         /// <param name="token"></param>
         /// <returns></returns>
         [RelayCommand]
-        private async Task ExcelToSpecKompas_ReadExcel ()
+        private async Task ExcelToSpecKompas_ReadExcel()
         {
             LogWrite = "Началась загрузка Excel файла...\n";
             ExcelToSpecKompas_MarksPos.Clear();
@@ -1356,7 +1356,6 @@ namespace PositionApplicability.ViewModels
                 ProgressBar_Value = 100;
                 LogWrite += $"Загрузка Excel файла завершилась.";
             });
-
         }
 
         [RelayCommand(IncludeCancelCommand = true)]
@@ -1364,6 +1363,12 @@ namespace PositionApplicability.ViewModels
         {
             LogWrite = "Начало записи в спецификацию...\n";
             ProgressBar_Value = 1;
+            if (ExcelToSpecKompas_ReadExcelCommand.IsRunning)
+            {
+                LogWrite += "Ошибка: дождитесь завершения загрузки Excel файла\n";
+                ProgressBar_Value = 0;
+                return;
+            }
             if (ExcelToSpecKompas_MarksPos.Count == 0)
             {
                 LogWrite += "Ошибка: загрузите Excel файл";
