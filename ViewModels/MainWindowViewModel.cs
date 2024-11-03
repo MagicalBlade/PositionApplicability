@@ -1366,11 +1366,13 @@ namespace PositionApplicability.ViewModels
             if (ExcelToSpecKompas_MarksPos.Count == 0)
             {
                 LogWrite += "Ошибка: загрузите Excel файл";
+                ProgressBar_Value = 0;
                 return;
             }
             if (!Directory.Exists(PathFolderAssembly))
             {
                 LogWrite += "Ошибка: не найден путь к файлам сборок";
+                ProgressBar_Value = 0;
                 return;
             }
             List<string> pathsAssemble = new();
@@ -1382,11 +1384,13 @@ namespace PositionApplicability.ViewModels
                 if (!File.Exists(pathTable))
                 {
                     LogWrite += "Ошибка: не найдена заготовка таблицы \"Спецификация стали\"";
+                    ProgressBar_Value = 0;
                     return;
                 }
                 if (!File.Exists(pathTableOneMark))
                 {
                     LogWrite += "Ошибка: не найдена заготовка таблицы \"Спецификация стали одна марка\"";
+                    ProgressBar_Value = 0;
                     return;
                 }
                 SearchOption searchOptionFill;
@@ -1407,6 +1411,7 @@ namespace PositionApplicability.ViewModels
                 if (kompas == null)
                 {
                     LogWrite += "Ошибка: не получилось запустить Компас";
+                    ProgressBar_Value = 0;
                     return;
                 }
                 ProgressBar_Value = 10;
@@ -1458,18 +1463,45 @@ namespace PositionApplicability.ViewModels
                     IViewsAndLayersManager viewsAndLayersManager = kompasDocuments2D.ViewsAndLayersManager;
                     IViews views = viewsAndLayersManager.Views;
                     IView view = views.View["Системный вид"];
+                    if (view == null)
+                    {
+                        LogWrite += $"Ошибка: не найден системный вид в {pathAssemble}.\n";
+                        continue;
+                    }
                     view.Current = true;
                     view.Update();
 
                     IDrawingGroups drawingGroups = kompasDocuments2D1.DrawingGroups;
                     IDrawingGroup drawingGroup = drawingGroups.Add(true, "");
-
-                    drawingGroup.ReadFragment(pathTable,true, 0, 0, 1, 0, false);
+                    if (ExcelToSpecKompas_MarksPos[mark].Count == 1)
+                    {
+                        pathTable = pathTableOneMark;
+                    }
+                    drawingGroup.ReadFragment(pathTable, true, 0, 0, 1, 0, false);
                     ksDocument2D ksDocument2D = kompas.TransferInterface(kompasDocuments2D, 1, 0);
                     IDrawingTable tableSpec = drawingGroup.Objects[0]; //Таблица
 
                     #region Заполняем таблицу
                     ITable table = (ITable)tableSpec;
+                    if (table == null)
+                    {
+                        LogWrite += $"Ошибка: не удалось загрузить заготовку таблицы в {pathAssemble}.\n";
+                        continue;
+                    }
+                    if (table.ColumnsCount != 10)
+                    {
+                        LogWrite += $"Ошибка: не правильное количество столбцов в стандартной таблице {pathTable}. Работа прекращена.";
+                        ProgressBar_Value = 0;
+                        kompas.Quit();
+                        return;
+                    }
+                    if ((ExcelToSpecKompas_MarksPos[mark].Count > 1 && table.RowsCount < 5) || (ExcelToSpecKompas_MarksPos[mark].Count == 1 && table.RowsCount < 4))
+                    {
+                        LogWrite += $"Ошибка: не правильное количество строк в стандартной таблице {pathTable}. Работа прекращена.";
+                        ProgressBar_Value = 0;
+                        kompas.Quit();
+                        return;
+                    }
                     for (int i = 0; i < ExcelToSpecKompas_MarksPos[mark].Count; i++)
                     {
                         if (ExcelToSpecKompas_MarksPos[mark][i][0] == "на сварные швы:")
@@ -1477,16 +1509,28 @@ namespace PositionApplicability.ViewModels
                             ((IText)table.Cell[table.RowsCount - 1, 7].Text).Str = ExcelToSpecKompas_MarksPos[mark][i][7];
                             continue;
                         }
-                        ((IText)table.Cell[i + 3, 0].Text).Str = ExcelToSpecKompas_MarksPos[mark][i][0];
-                        ((IText)table.Cell[i + 3, 1].Text).Str = ExcelToSpecKompas_MarksPos[mark][i][1];
-                        ((IText)table.Cell[i + 3, 2].Text).Str = ExcelToSpecKompas_MarksPos[mark][i][2];
-                        ((IText)table.Cell[i + 3, 3].Text).Str = ExcelToSpecKompas_MarksPos[mark][i][3];
-                        ((IText)table.Cell[i + 3, 4].Text).Str = ExcelToSpecKompas_MarksPos[mark][i][4];
-                        ((IText)table.Cell[i + 3, 5].Text).Str = ExcelToSpecKompas_MarksPos[mark][i][5];
-                        ((IText)table.Cell[i + 3, 6].Text).Str = ExcelToSpecKompas_MarksPos[mark][i][6];
-                        ((IText)table.Cell[i + 3, 7].Text).Str = ExcelToSpecKompas_MarksPos[mark][i][7];
-                        ((IText)table.Cell[i + 3, 8].Text).Str = ExcelToSpecKompas_MarksPos[mark][i][8];
-                        ((IText)table.Cell[i + 3, 9].Text).Str = ExcelToSpecKompas_MarksPos[mark][i][9];
+                        IText text_0 = (IText)table.Cell[i + 3, 0].Text;
+                        IText text_1 = (IText)table.Cell[i + 3, 1].Text;
+                        IText text_2 = (IText)table.Cell[i + 3, 2].Text;
+                        IText text_3 = (IText)table.Cell[i + 3, 3].Text;
+                        IText text_4 = (IText)table.Cell[i + 3, 4].Text;
+                        IText text_5 = (IText)table.Cell[i + 3, 5].Text;
+                        IText text_6 = (IText)table.Cell[i + 3, 6].Text;
+                        IText text_7 = (IText)table.Cell[i + 3, 7].Text;
+                        IText text_8 = (IText)table.Cell[i + 3, 8].Text;
+                        IText text_9 = (IText)table.Cell[i + 3, 9].Text;
+
+                        text_0.Str = ExcelToSpecKompas_MarksPos[mark][i][0];
+                        text_1.Str = ExcelToSpecKompas_MarksPos[mark][i][1];
+                        text_2.Str = ExcelToSpecKompas_MarksPos[mark][i][2];
+                        text_3.Str = ExcelToSpecKompas_MarksPos[mark][i][3];
+                        text_4.Str = ExcelToSpecKompas_MarksPos[mark][i][4];
+                        text_5.Str = ExcelToSpecKompas_MarksPos[mark][i][5];
+                        text_6.Str = ExcelToSpecKompas_MarksPos[mark][i][6];
+                        text_7.Str = ExcelToSpecKompas_MarksPos[mark][i][7];
+                        text_8.Str = ExcelToSpecKompas_MarksPos[mark][i][8];
+                        text_9.Str = ExcelToSpecKompas_MarksPos[mark][i][9];
+
                         table.AddRow(i + 3, true);
                     }
                     tableSpec.Update();
