@@ -1513,7 +1513,7 @@ namespace PositionApplicability.ViewModels
                     foreach (IDrawingTable item in drawingTables)
                     {
                         ITable tableSearch = (ITable)item;
-                        if (((IText)tableSearch.Cell[0, 0].Text).Str.Trim() == textfirstcell)
+                        if (((IText)tableSearch.Cell[0, 0].Text).Str.IndexOf(textfirstcell) != -1)
                         {
                             item.Delete();
                         }
@@ -1555,7 +1555,7 @@ namespace PositionApplicability.ViewModels
                     //Заполняем таблицу
                     for (int i = 0; i < ExcelToSpecKompas_MarksPos[mark].Count; i++)
                     {
-                        if (ExcelToSpecKompas_MarksPos[mark][i][0].Trim() == searchwelds.Trim())
+                        if (ExcelToSpecKompas_MarksPos[mark][i][0].IndexOf(searchwelds) != -1)
                         {
                             ((IText)table.Cell[table.RowsCount - 1, 7].Text).Str = ExcelToSpecKompas_MarksPos[mark][i][7];
                             numberdeletrow -= 1;
@@ -1603,7 +1603,7 @@ namespace PositionApplicability.ViewModels
                     };
                     if (layoutSheet == null)
                     {
-                        LogWrite += $"Ошибка: не удалось найти лист {pathAssemble}.\n";
+                        LogWrite += $"Ошибка: не удалось найти чертёжный лист {pathAssemble}.\n";
                         continue;
                     }
                     //Получение внутреннего габарита листа чертежа
