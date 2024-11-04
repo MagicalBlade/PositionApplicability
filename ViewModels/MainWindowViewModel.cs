@@ -858,7 +858,6 @@ namespace PositionApplicability.ViewModels
         }
         #endregion
 
-
         #region Получение данных позиций из деталировки
         /// <summary>
         /// Получение данных позиций из деталировки
@@ -1292,6 +1291,7 @@ namespace PositionApplicability.ViewModels
             }
             else
             {
+                ProgressBar_Value = 0;
                 return;
             }
             ProgressBar_Value = 5;
@@ -1300,27 +1300,37 @@ namespace PositionApplicability.ViewModels
                 if (!File.Exists(pathexcel))
                 {
                     LogWrite += $"Ошибка: не найден - {pathexcel}";
+                    ProgressBar_Value = 0;
                     return;
                 }
                 XLWorkbook? workbook = null;
                 try
                 {
-                    workbook = new XLWorkbook(pathexcel); //TODO сделать проверку на возможность открыть файл
+                    workbook = new XLWorkbook(pathexcel);
                 }
                 catch (Exception)
                 {
-                    LogWrite += $"Ошибка: закройте загружаеммый Ecxek файл - {pathexcel}";
+                    LogWrite += $"Ошибка: закройте загружаеммый Excel файл - {pathexcel}";
+                    ProgressBar_Value = 0;
                     return;
                 }
                 if (workbook == null)
                 {
                     LogWrite += $"Ошибка: не удалось открыть - {pathexcel}";
+                    ProgressBar_Value = 0;
                     return;
                 }
                 workbook.TryGetWorksheet(sheetname, out IXLWorksheet? ws);
                 if (ws == null)
                 {
                     LogWrite += $"Ошибка: не найден лист с именем - {sheetname}" ;
+                    ProgressBar_Value = 0;
+                    return;
+                }
+                if (ws.LastRowUsed() == null)
+                {
+                    LogWrite += $"Ошибка: лист {sheetname} пуст";
+                    ProgressBar_Value = 0;
                     return;
                 }
                 ProgressBar_Value = 10;
@@ -1333,22 +1343,23 @@ namespace PositionApplicability.ViewModels
                     if (ExcelToSpecKompas_MarksPos.ContainsKey(keyMark))
                     {
                         ExcelToSpecKompas_MarksPos[keyMark].Add(new string[]
-                        {
-                                 ws.Cell(i, 1).GetValue<string>(),
-                                 ws.Cell(i, 2).GetValue<string>(),
-                                 ws.Cell(i, 3).GetValue<string>(),
-                                 ws.Cell(i, 4).GetValue<string>(),
-                                 ws.Cell(i, 5).GetValue<string>(),
-                                 ws.Cell(i, 6).GetValue<string>(),
-                                 ws.Cell(i, 7).GetValue<string>(),
-                                 ws.Cell(i, 8).GetValue<string>(),
-                                 ws.Cell(i, 9).GetValue<string>(),
-                                 ws.Cell(i, 10).GetValue<string>(),
-                        });
+                            {
+                                ws.Cell(i, 1).GetValue<string>(),
+                                ws.Cell(i, 2).GetValue<string>(),
+                                ws.Cell(i, 3).GetValue<string>(),
+                                ws.Cell(i, 4).GetValue<string>(),
+                                ws.Cell(i, 5).GetValue<string>(),
+                                ws.Cell(i, 6).GetValue<string>(),
+                                ws.Cell(i, 7).GetValue<string>(),
+                                ws.Cell(i, 8).GetValue<string>(),
+                                ws.Cell(i, 9).GetValue<string>(),
+                                ws.Cell(i, 10).GetValue<string>(),
+                            });
                     }
                     else
                     {
-                        ExcelToSpecKompas_MarksPos.Add(keyMark, new List<string[]>{ new string[] {
+                        ExcelToSpecKompas_MarksPos.Add(keyMark, new List<string[]>{ new string[]
+                            {
                                  ws.Cell(i, 1).GetValue<string>(),
                                  ws.Cell(i, 2).GetValue<string>(),
                                  ws.Cell(i, 3).GetValue<string>(),
@@ -1394,6 +1405,8 @@ namespace PositionApplicability.ViewModels
             await Task.Run((() =>
             {
                 string textfirstcell = "Спецификация стали";
+                string searchwelds = "на сварные швы:";
+                string nameview= "Системный вид";
                 string pathTable = $"{Directory.GetCurrentDirectory()}\\Resources\\Спецификация стали.frw";
                 string pathTableOneMark = $"{Directory.GetCurrentDirectory()}\\Resources\\Спецификация стали одна марка.frw";
                 if (!File.Exists(pathTable))
@@ -1417,11 +1430,16 @@ namespace PositionApplicability.ViewModels
                 {
                     searchOptionFill = SearchOption.TopDirectoryOnly;
                 }
-
+                Info = "Запускается Компас";
                 #region Запуск Компаса
                 Type? kompasType = Type.GetTypeFromProgID("Kompas.Application.5", true);
                 PBExtraction_Value = 10;
-                if (kompasType == null) return;
+                if (kompasType == null)
+                {
+                    LogWrite += "Ошибка: Компас не найден в системе";
+                    ProgressBar_Value = 0;
+                    return;
+                }
                 KompasObject? kompas = Activator.CreateInstance(kompasType) as KompasObject; //Запуск компаса
                 if (kompas == null)
                 {
@@ -1438,6 +1456,8 @@ namespace PositionApplicability.ViewModels
                     return;
                 } 
                 #endregion
+
+                // Открытие чертежей марок
                 foreach (string mark in ExcelToSpecKompas_MarksPos.Keys)
                 {
                     if (token.IsCancellationRequested)
@@ -1477,12 +1497,13 @@ namespace PositionApplicability.ViewModels
                     }
                     IViewsAndLayersManager viewsAndLayersManager = kompasDocuments2D.ViewsAndLayersManager;
                     IViews views = viewsAndLayersManager.Views;
-                    IView view = views.View["Системный вид"];
+                    IView view = views.View[nameview];
                     if (view == null)
                     {
-                        LogWrite += $"Ошибка: не найден системный вид в {pathAssemble}.\n";
+                        LogWrite += $"Ошибка: не найден {nameview} в {pathAssemble}.\n";
                         continue;
                     }
+                    Info = $"Обрабатывается {mark}";
                     view.Current = true;
                     view.Update();
 
@@ -1509,7 +1530,7 @@ namespace PositionApplicability.ViewModels
                     ksDocument2D ksDocument2D = kompas.TransferInterface(kompasDocuments2D, 1, 0);
                     IDrawingTable tableSpec = drawingGroup.Objects[0]; //Таблица
 
-                    #region Заполняем таблицу
+                    #region Работа с таблицей
                     ITable table = (ITable)tableSpec;
                     if (table == null)
                     {
@@ -1530,20 +1551,14 @@ namespace PositionApplicability.ViewModels
                         kompas.Quit();
                         return;
                     }
-                    // Создание строк таблицы
-                    for (int i = 0; i < ExcelToSpecKompas_MarksPos[mark].Count - 2; i++)
-                    {
-                        table.AddRow(i + 3, true);
-                    }
-                    //Меняем стил промежуточных горизонтальных линий на тонкий
-                    ITableRange tableRange = table.Range[3, 0, table.RowsCount - 2, table.ColumnsCount];
-                    ICellBoundaries cellBoundaries = tableRange.CellsBoundaries;
-                    cellBoundaries.LineStyle[ksCellBoundariesEnum.ksCBHorisontMidleBorder] = ksCurveStyleEnum.ksCSThin;
+                    int numberdeletrow = ExcelToSpecKompas_MarksPos[mark].Count + 3;
+                    //Заполняем таблицу
                     for (int i = 0; i < ExcelToSpecKompas_MarksPos[mark].Count; i++)
                     {
-                        if (ExcelToSpecKompas_MarksPos[mark][i][0] == "на сварные швы:")
+                        if (ExcelToSpecKompas_MarksPos[mark][i][0].Trim() == searchwelds.Trim())
                         {
                             ((IText)table.Cell[table.RowsCount - 1, 7].Text).Str = ExcelToSpecKompas_MarksPos[mark][i][7];
+                            numberdeletrow -= 1;
                             continue;
                         }
                         for (int j = 0; j < table.ColumnsCount; j++)
@@ -1561,8 +1576,19 @@ namespace PositionApplicability.ViewModels
                                 ((IText)tableCell.Text).Str = ExcelToSpecKompas_MarksPos[mark][i][j];
                             }
                         }
+                        table.AddRow(i + 3, true);
+                        //Меняем стиль промежуточных горизонтальных линий на тонкий
+                        ITableRange tableRange = table.Range[i + 3, 0, i + 3, table.ColumnsCount];
+                        ICellBoundaries cellBoundaries = tableRange.CellsBoundaries;
+                        cellBoundaries.LineStyle[ksCellBoundariesEnum.ksCBBottomBorder] = ksCurveStyleEnum.ksCSThin;
                     }
-                    
+                    //Удаление лишней строки
+                    table.DeleteRow(numberdeletrow);
+                    ITableRange tableRangeLast = table.Range[table.RowsCount - 1, 0, table.RowsCount - 1, table.ColumnsCount];
+                    ICellBoundaries cellBoundariesLast = tableRangeLast.CellsBoundaries;
+                    cellBoundariesLast.LineStyle[ksCellBoundariesEnum.ksCBBottomBorder] = ksCurveStyleEnum.ksCSNormal;
+                    cellBoundariesLast.LineStyle[ksCellBoundariesEnum.ksCBTopBorder] = ksCurveStyleEnum.ksCSNormal;
+
                     tableSpec.Update();
                     ILayoutSheets layoutSheets = kompasDocuments2D.LayoutSheets;
                     ILayoutSheet? layoutSheet = layoutSheets.ItemByNumber[1];
@@ -1580,6 +1606,7 @@ namespace PositionApplicability.ViewModels
                         LogWrite += $"Ошибка: не удалось найти лист {pathAssemble}.\n";
                         continue;
                     }
+                    //Получение внутреннего габарита листа чертежа
                     layoutSheet.GetPlaceInsideFrames(out double left, out double top, out double right, out double bottom);
                     ksDocument2D.ksMoveObj(drawingGroup.Reference, right, top);
                     drawingGroup.Store();
@@ -1592,8 +1619,10 @@ namespace PositionApplicability.ViewModels
                     kompasDocuments2D.Close(DocumentCloseOptions.kdSaveChanges);
                     #endregion
                 }
+
                 kompas.Quit();
                 ProgressBar_Value = 100;
+                Info = "";
                 LogWrite += "Запись в спецификации завершилась.";
             }));
             
