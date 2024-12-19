@@ -1407,9 +1407,9 @@ namespace PositionApplicability.ViewModels
                 string textfirstcell = "Спецификация стали";
                 string searchwelds = "на сварные швы:";
                 string nameview= "Системный вид";
-                string pathTable = $"{Directory.GetCurrentDirectory()}\\Resources\\Спецификация стали.frw";
+                string pathTablePos = $"{Directory.GetCurrentDirectory()}\\Resources\\Спецификация стали.frw";
                 string pathTableOneMark = $"{Directory.GetCurrentDirectory()}\\Resources\\Спецификация стали одна марка.frw";
-                if (!File.Exists(pathTable))
+                if (!File.Exists(pathTablePos))
                 {
                     LogWrite += "Ошибка: не найдена заготовка таблицы \"Спецификация стали\"";
                     ProgressBar_Value = 0;
@@ -1522,9 +1522,14 @@ namespace PositionApplicability.ViewModels
 
                     IDrawingGroups drawingGroups = kompasDocuments2D1.DrawingGroups;
                     IDrawingGroup drawingGroup = drawingGroups.Add(true, "");
+                    string pathTable;
                     if (ExcelToSpecKompas_MarksPos[mark].Count == 1)
                     {
                         pathTable = pathTableOneMark;
+                    }
+                    else
+                    {
+                        pathTable = pathTablePos;
                     }
                     drawingGroup.ReadFragment(pathTable, true, 0, 0, 1, 0, false);
                     ksDocument2D ksDocument2D = kompas.TransferInterface(kompasDocuments2D, 1, 0);
