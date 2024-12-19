@@ -1539,17 +1539,13 @@ namespace PositionApplicability.ViewModels
                     }
                     if (table.ColumnsCount != 10)
                     {
-                        LogWrite += $"Ошибка: не правильное количество столбцов в стандартной таблице {pathTable}. Работа прекращена.";
-                        ProgressBar_Value = 0;
-                        kompas.Quit();
-                        return;
+                        LogWrite += $"Ошибка: не правильное количество столбцов в стандартной таблице {pathTable}. Таблица не вставлена в {pathAssemble}.";
+                        continue;
                     }
                     if ((ExcelToSpecKompas_MarksPos[mark].Count > 1 && table.RowsCount < 5) || (ExcelToSpecKompas_MarksPos[mark].Count == 1 && table.RowsCount < 4))
                     {
-                        LogWrite += $"Ошибка: не правильное количество строк в стандартной таблице {pathTable}. Работа прекращена.";
-                        ProgressBar_Value = 0;
-                        kompas.Quit();
-                        return;
+                        LogWrite += $"Ошибка: не правильное количество строк в стандартной таблице {pathTable}. Таблица не вставлена в {pathAssemble}.";
+                        continue;
                     }
                     int numberdeletrow = ExcelToSpecKompas_MarksPos[mark].Count + 3;
                     //Заполняем таблицу
@@ -1566,10 +1562,8 @@ namespace PositionApplicability.ViewModels
                             ITableCell? tableCell = table.Cell[i + 3, j];
                             if (tableCell == null)
                             {
-                                LogWrite += $"Ошибка: глобальная ошибка. Ячейка стандартной таблицы {pathTable} вернула NULL в файле {pathAssemble}. Работа прекращена.";
-                                ProgressBar_Value = 0;
-                                kompas.Quit();
-                                return;
+                                LogWrite += $"Ошибка: глобальная ошибка. Ячейка стандартной таблицы {pathTable} вернула NULL в файле {pathAssemble}, таблица не вставлена.";
+                                continue;
                             }
                             else
                             {
