@@ -1414,6 +1414,7 @@ namespace PositionApplicability.ViewModels
                         ExcelToSpecKompas_MMS.Add(keyMark, new string[]
                             {
                                  wsMMS.Cell(i, 3).GetValue<string>(),
+                                 wsMMS.Cell(i, 4).GetValue<string>(),
                                  wsMMS.Cell(i, 5).GetValue<string>(),
                                  wsMMS.Cell(i, 6).GetValue<string>(),
                              });
@@ -1823,9 +1824,10 @@ namespace PositionApplicability.ViewModels
                     //Заполняем таблицу
                     ((IText)table.Cell[3, 0].Text).Str = mark;
                     ((IText)table.Cell[3, 1].Text).Str = ExcelToSpecKompas_MMS[mark][0];
-                    ((IText)table.Cell[3, 3].Text).Str = ExcelToSpecKompas_MMS[mark][1];
-                    ((IText)table.Cell[3, 4].Text).Str = ExcelToSpecKompas_MMS[mark][2];
-                    ((IText)table.Cell[4, 4].Text).Str = ExcelToSpecKompas_MMS[mark][2];
+                    ((IText)table.Cell[3, 2].Text).Str = ExcelToSpecKompas_MMS[mark][1];
+                    ((IText)table.Cell[3, 3].Text).Str = ExcelToSpecKompas_MMS[mark][2];
+                    ((IText)table.Cell[3, 4].Text).Str = ExcelToSpecKompas_MMS[mark][3];
+                    ((IText)table.Cell[4, 4].Text).Str = ExcelToSpecKompas_MMS[mark][3];
                     drawingTable.Update();                    
                     kompasDocuments2D.Save();
                     if (kompasDocuments2D.Changed)
