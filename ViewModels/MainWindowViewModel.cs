@@ -97,6 +97,10 @@ namespace PositionApplicability.ViewModels
         /// </summary>
         private Dictionary<string, List<string[]>> ExcelToSpecKompas_MarksPos = new(); //Key = марка
 
+        /// <summary>
+        /// Данные из экселя. Список марок со списком количества и массы этих марок
+        /// </summary>
+        private Dictionary<string, List<string[]>> ExcelToSpecKompas_MMS = new(); //Key = марка
         #endregion
 
         #region Нумерация сборок
@@ -1280,7 +1284,8 @@ namespace PositionApplicability.ViewModels
             ExcelToSpecKompas_MarksPos.Clear();
             ProgressBar_Value = 1;
             string pathexcel = "";
-            string sheetname = "Позиции";
+            string sheetnamePos = "Позиции";
+            string sheetnameMMS = "ММС";
             OpenFileDialog dialog = new()
             {
                 Filter = "excel files(*.xlsx)|*.xlsx"
@@ -1320,59 +1325,103 @@ namespace PositionApplicability.ViewModels
                     ProgressBar_Value = 0;
                     return;
                 }
-                workbook.TryGetWorksheet(sheetname, out IXLWorksheet? ws);
-                if (ws == null)
+                #region Получение данных для "Спецификации"
+                workbook.TryGetWorksheet(sheetnamePos, out IXLWorksheet? wsPos);
+                if (wsPos == null)
                 {
-                    LogWrite += $"Ошибка: не найден лист с именем - {sheetname}" ;
+                    LogWrite += $"Ошибка: не найден лист с именем - {sheetnamePos}";
                     ProgressBar_Value = 0;
                     return;
                 }
-                if (ws.LastRowUsed() == null)
+                if (wsPos.LastRowUsed() == null)
                 {
-                    LogWrite += $"Ошибка: лист {sheetname} пуст";
+                    LogWrite += $"Ошибка: лист {sheetnamePos} пуст";
                     ProgressBar_Value = 0;
                     return;
                 }
                 ProgressBar_Value = 10;
-                double indexPB = 90.0 / (ws.LastRowUsed().RowNumber() - 2);
-                for (int i = 3; i < ws.LastRowUsed().RowNumber() + 1; i++)
+                double indexPB = 45.0 / (wsPos.LastRowUsed().RowNumber() - 2);
+                for (int i = 3; i < wsPos.LastRowUsed().RowNumber() + 1; i++)
                 {
                     ProgressBar_Value += indexPB;
-                    string keyMark = ws.Cell(i, 11).GetValue<string>();
-                    string key_Pos = ws.Cell(i, 1).GetValue<string>();
+                    string keyMark = wsPos.Cell(i, 11).GetValue<string>();
+                    string key_Pos = wsPos.Cell(i, 1).GetValue<string>();
                     if (ExcelToSpecKompas_MarksPos.ContainsKey(keyMark))
                     {
                         ExcelToSpecKompas_MarksPos[keyMark].Add(new string[]
                             {
-                                ws.Cell(i, 1).GetValue<string>(),
-                                ws.Cell(i, 2).GetValue<string>(),
-                                ws.Cell(i, 3).GetValue<string>(),
-                                ws.Cell(i, 4).GetValue<string>(),
-                                ws.Cell(i, 5).GetValue<string>(),
-                                ws.Cell(i, 6).GetValue<string>(),
-                                ws.Cell(i, 7).GetValue<string>(),
-                                ws.Cell(i, 8).GetValue<string>(),
-                                ws.Cell(i, 9).GetValue<string>(),
-                                ws.Cell(i, 10).GetValue<string>(),
+                                wsPos.Cell(i, 1).GetValue<string>(),
+                                wsPos.Cell(i, 2).GetValue<string>(),
+                                wsPos.Cell(i, 3).GetValue<string>(),
+                                wsPos.Cell(i, 4).GetValue<string>(),
+                                wsPos.Cell(i, 5).GetValue<string>(),
+                                wsPos.Cell(i, 6).GetValue<string>(),
+                                wsPos.Cell(i, 7).GetValue<string>(),
+                                wsPos.Cell(i, 8).GetValue<string>(),
+                                wsPos.Cell(i, 9).GetValue<string>(),
+                                wsPos.Cell(i, 10).GetValue<string>(),
                             });
                     }
                     else
                     {
                         ExcelToSpecKompas_MarksPos.Add(keyMark, new List<string[]>{ new string[]
                             {
-                                 ws.Cell(i, 1).GetValue<string>(),
-                                 ws.Cell(i, 2).GetValue<string>(),
-                                 ws.Cell(i, 3).GetValue<string>(),
-                                 ws.Cell(i, 4).GetValue<string>(),
-                                 ws.Cell(i, 5).GetValue<string>(),
-                                 ws.Cell(i, 6).GetValue<string>(),
-                                 ws.Cell(i, 7).GetValue<string>(),
-                                 ws.Cell(i, 8).GetValue<string>(),
-                                 ws.Cell(i, 9).GetValue<string>(),
-                                 ws.Cell(i, 10).GetValue<string>(),
+                                 wsPos.Cell(i, 1).GetValue<string>(),
+                                 wsPos.Cell(i, 2).GetValue<string>(),
+                                 wsPos.Cell(i, 3).GetValue<string>(),
+                                 wsPos.Cell(i, 4).GetValue<string>(),
+                                 wsPos.Cell(i, 5).GetValue<string>(),
+                                 wsPos.Cell(i, 6).GetValue<string>(),
+                                 wsPos.Cell(i, 7).GetValue<string>(),
+                                 wsPos.Cell(i, 8).GetValue<string>(),
+                                 wsPos.Cell(i, 9).GetValue<string>(),
+                                 wsPos.Cell(i, 10).GetValue<string>(),
                              }});
                     }
                 }
+                #endregion
+
+                #region Получение данных для "Ведомость марок"
+                workbook.TryGetWorksheet(sheetnameMMS, out IXLWorksheet? wsMMS);
+                if (wsMMS == null)
+                {
+                    LogWrite += $"Ошибка: не найден лист с именем - {sheetnameMMS}";
+                    ProgressBar_Value = 0;
+                    return;
+                }
+                if (wsMMS.LastRowUsed() == null)
+                {
+                    LogWrite += $"Ошибка: лист {sheetnameMMS} пуст";
+                    ProgressBar_Value = 0;
+                    return;
+                }
+                double indexPBMMS = 45.0 / (wsMMS.LastRowUsed().RowNumber() - 2);
+                for (int i = 3; i < wsMMS.LastRowUsed().RowNumber() + 1; i++)
+                {
+                    ProgressBar_Value += indexPBMMS;
+                    string keyMark = wsMMS.Cell(i, 1).GetValue<string>();
+                    if (ExcelToSpecKompas_MMS.ContainsKey(keyMark))
+                    {
+                        ExcelToSpecKompas_MMS[keyMark].Add(new string[]
+                            {
+                                wsMMS.Cell(i, 3).GetValue<string>(),
+                                wsMMS.Cell(i, 5).GetValue<string>(),
+                                wsMMS.Cell(i, 6).GetValue<string>(),
+                            });
+                    }
+                    else
+                    {
+                        ExcelToSpecKompas_MMS.Add(keyMark, new List<string[]>{ new string[]
+                            {
+                                 wsMMS.Cell(i, 3).GetValue<string>(),
+                                 wsMMS.Cell(i, 5).GetValue<string>(),
+                                 wsMMS.Cell(i, 6).GetValue<string>(),
+                             }});
+                    }
+                }
+                #endregion
+
+
                 ProgressBar_Value = 100;
                 LogWrite += $"Загрузка Excel файла завершилась.";
             });
