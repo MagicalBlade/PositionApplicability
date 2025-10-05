@@ -171,10 +171,12 @@
                         <CheckBox Content="В подпапках" IsChecked="{Binding IsAllDirectoryExtraction}" VerticalContentAlignment="Center" VerticalAlignment="Center" Padding="3" Margin="3"/>
                         <Button Content="Записать в спецификацию Компаса" Padding="5,5" Command="{Binding ExcelToSpecKompas_WriteToSpecCommand}"/>
                         <Button Content="Отмена" HorizontalAlignment="Center" Padding="3" Margin="3" Command="{Binding ExcelToSpecKompas_WriteToSpecCancelCommand}"/>
+                        <TextBlock Text="Получены с листа с именем Позиции"/>
                     </StackPanel>
                     <StackPanel Orientation="Horizontal" HorizontalAlignment="Center">
                         <Button Content="Записать в ведомость марок Компаса" Padding="5,5" Command="{Binding ExcelToSpecKompas_WriteToListMarkCommand}"/>
                         <Button Content="Отмена" HorizontalAlignment="Center" Padding="3" Margin="3" Command="{Binding ExcelToSpecKompas_WriteToListMarkCancelCommand}"/>
+                        <TextBlock Text="Получены с листа с именем ММС"/>
                     </StackPanel>
                     <TextBlock Text="Журнал работы"/>
                     <TextBox Text="{Binding LogWrite}" Height="100" VerticalContentAlignment="Top" VerticalScrollBarVisibility="Auto" IsReadOnly="True" TextWrapping="WrapWithOverflow" TextChanged="TextBox_TextChanged"/>

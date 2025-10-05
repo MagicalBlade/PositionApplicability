@@ -1331,6 +1331,7 @@ namespace PositionApplicability.ViewModels
                     return;
                 }
                 #region Получение данных для "Спецификации"
+                LogWrite += $"Чтение данных Спецификации с листа {sheetnamePos} \n";
                 workbook.TryGetWorksheet(sheetnamePos, out IXLWorksheet? wsPos);
                 if (wsPos == null)
                 {
@@ -1387,6 +1388,7 @@ namespace PositionApplicability.ViewModels
                 #endregion
 
                 #region Получение данных для "Ведомость марок"
+                LogWrite += $"Чтение данных Ведомости отправочных марок с листа {sheetnameMMS} \n";
                 workbook.TryGetWorksheet(sheetnameMMS, out IXLWorksheet? wsMMS);
                 if (wsMMS == null)
                 {
