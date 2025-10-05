@@ -1440,7 +1440,6 @@ namespace PositionApplicability.ViewModels
             if (ExcelToSpecKompas_ReadExcelCommand.IsRunning || ExcelToSpecKompas_WriteToListMarkCommand.IsRunning)
             {
                 LogWrite += "Ошибка: дождитесь завершения работы других команд\n";
-                ProgressBar_Value = 0;
                 return;
             }
             if (ExcelToSpecKompas_MarksPos.Count == 0)
@@ -1694,7 +1693,6 @@ namespace PositionApplicability.ViewModels
             if (ExcelToSpecKompas_ReadExcelCommand.IsRunning || ExcelToSpecKompas_WriteToSpecCommand.IsRunning)
             {
                 LogWrite += "Ошибка: дождитесь завершения работы других команд\n";
-                ProgressBar_Value = 0;
                 return;
             }
             if (ExcelToSpecKompas_MMS.Count == 0)
