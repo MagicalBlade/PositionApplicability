@@ -1287,6 +1287,7 @@ namespace PositionApplicability.ViewModels
         {
             LogWrite = "Началась загрузка Excel файла...\n";
             ExcelToSpecKompas_MarksPos.Clear();
+            ExcelToSpecKompas_MMS.Clear();
             ProgressBar_Value = 1;
             PathExcel = "";
             string sheetnamePos = "Позиции";
@@ -1351,6 +1352,10 @@ namespace PositionApplicability.ViewModels
                 {
                     ProgressBar_Value += indexPB;
                     string keyMark = wsPos.Cell(i, 11).GetValue<string>();
+                    if (keyMark.Trim(' ') == "")
+                    {
+                        continue;
+                    }
                     string key_Pos = wsPos.Cell(i, 1).GetValue<string>();
                     if (ExcelToSpecKompas_MarksPos.ContainsKey(keyMark))
                     {
@@ -1407,6 +1412,10 @@ namespace PositionApplicability.ViewModels
                 {
                     ProgressBar_Value += indexPBMMS;
                     string keyMark = wsMMS.Cell(i, 1).GetValue<string>();
+                    if (keyMark.Trim(' ') == "")
+                    {
+                        continue;
+                    }
                     if (ExcelToSpecKompas_MMS.ContainsKey(keyMark))
                     {
                         LogWrite += $"Ошибка: несколько одинаковых марок {keyMark} \n";
