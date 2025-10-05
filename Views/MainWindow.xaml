@@ -159,6 +159,10 @@
                 <StackPanel Grid.Row="0" Orientation="Vertical">
                     <Button Content="Загрузить Excel файл" Padding="5,5" Command="{Binding ExcelToSpecKompas_ReadExcelCommand}"/>
                     <DockPanel>
+                        <TextBlock DockPanel.Dock="Left" Text="Загруженный файл Excel:" VerticalAlignment="Center"/>
+                        <TextBox DockPanel.Dock="Left" Text="{Binding PathExcel}" IsReadOnly="True" Padding="2" VerticalContentAlignment="Center" FlowDirection="RightToLeft"/>
+                    </DockPanel>
+                    <DockPanel>
                         <Button Content="Указать путь к файлам сборок:" Padding="3" Margin="3"  Command="{Binding OpenFolderDialogAssemblyCommand}"/>
                         <TextBox Height="25" Padding="3" Margin="3" Text="{Binding PathFolderAssembly}"/>
                     </DockPanel>
@@ -168,11 +172,14 @@
                         <Button Content="Записать в спецификацию Компаса" Padding="5,5" Command="{Binding ExcelToSpecKompas_WriteToSpecCommand}"/>
                         <Button Content="Отмена" HorizontalAlignment="Center" Padding="3" Margin="3" Command="{Binding ExcelToSpecKompas_WriteToSpecCancelCommand}"/>
                     </StackPanel>
+                    <StackPanel Orientation="Horizontal" HorizontalAlignment="Center">
+                        <Button Content="Записать в ведомость марок Компаса" Padding="5,5" Command="{Binding ExcelToSpecKompas_WriteToListMarkCommand}"/>
+                        <Button Content="Отмена" HorizontalAlignment="Center" Padding="3" Margin="3" Command="{Binding ExcelToSpecKompas_WriteToListMarkCancelCommand}"/>
+                    </StackPanel>
                     <TextBlock Text="Журнал работы"/>
                     <TextBox Text="{Binding LogWrite}" Height="100" VerticalContentAlignment="Top" VerticalScrollBarVisibility="Auto" IsReadOnly="True" TextWrapping="WrapWithOverflow" TextChanged="TextBox_TextChanged"/>
                 </StackPanel>
             </TabItem>
-
         </TabControl>
         <Button Grid.Row="1" Content="Журнал" Padding="5,5" Margin="10,0" HorizontalAlignment="Right" Command="{Binding OpenLogCommand}"/>
         <StatusBar Grid.Row="2">

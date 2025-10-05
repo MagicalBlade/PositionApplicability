@@ -83,6 +83,11 @@ namespace PositionApplicability.ViewModels
         /// </summary>
         [ObservableProperty]
         private List<string[]> _posData = new();
+        /// <summary>
+        /// Путь к загруженному файлу Excel
+        /// </summary>
+        [ObservableProperty]
+        private string _pathExcel = "";
 
         [ObservableProperty]
         [NotifyCanExecuteChangedFor(nameof(OpenLogCommand))]
@@ -100,7 +105,7 @@ namespace PositionApplicability.ViewModels
         /// <summary>
         /// Данные из экселя. Список марок со списком количества и массы этих марок
         /// </summary>
-        private Dictionary<string, List<string[]>> ExcelToSpecKompas_MMS = new(); //Key = марка
+        private Dictionary<string, string[]> ExcelToSpecKompas_MMS = new(); //Key = марка
         #endregion
 
         #region Нумерация сборок
@@ -1271,7 +1276,7 @@ namespace PositionApplicability.ViewModels
         }
         #endregion
 
-        #region Запись данных из excel файла в спецификацию в чертеже компаса
+        #region Запись данных из excel файла в чертеже компаса
         /// <summary>
         /// Чтение excel файла
         /// </summary>
@@ -1283,7 +1288,7 @@ namespace PositionApplicability.ViewModels
             LogWrite = "Началась загрузка Excel файла...\n";
             ExcelToSpecKompas_MarksPos.Clear();
             ProgressBar_Value = 1;
-            string pathexcel = "";
+            PathExcel = "";
             string sheetnamePos = "Позиции";
             string sheetnameMMS = "ММС";
             OpenFileDialog dialog = new()
@@ -1292,7 +1297,7 @@ namespace PositionApplicability.ViewModels
             };
             if (dialog.ShowDialog() == DialogResult.OK)
             {
-                pathexcel = dialog.FileName;
+                PathExcel = dialog.FileName;
             }
             else
             {
@@ -1302,26 +1307,26 @@ namespace PositionApplicability.ViewModels
             ProgressBar_Value = 5;
             await Task.Run(() =>
             {
-                if (!File.Exists(pathexcel))
+                if (!File.Exists(PathExcel))
                 {
-                    LogWrite += $"Ошибка: не найден - {pathexcel}";
+                    LogWrite += $"Ошибка: не найден - {PathExcel}";
                     ProgressBar_Value = 0;
                     return;
                 }
                 XLWorkbook? workbook = null;
                 try
                 {
-                    workbook = new XLWorkbook(pathexcel);
+                    workbook = new XLWorkbook(PathExcel);
                 }
                 catch (Exception)
                 {
-                    LogWrite += $"Ошибка: закройте загружаеммый Excel файл - {pathexcel}";
+                    LogWrite += $"Ошибка: закройте загружаеммый Excel файл - {PathExcel}";
                     ProgressBar_Value = 0;
                     return;
                 }
                 if (workbook == null)
                 {
-                    LogWrite += $"Ошибка: не удалось открыть - {pathexcel}";
+                    LogWrite += $"Ошибка: не удалось открыть - {PathExcel}";
                     ProgressBar_Value = 0;
                     return;
                 }
@@ -1402,37 +1407,38 @@ namespace PositionApplicability.ViewModels
                     string keyMark = wsMMS.Cell(i, 1).GetValue<string>();
                     if (ExcelToSpecKompas_MMS.ContainsKey(keyMark))
                     {
-                        ExcelToSpecKompas_MMS[keyMark].Add(new string[]
-                            {
-                                wsMMS.Cell(i, 3).GetValue<string>(),
-                                wsMMS.Cell(i, 5).GetValue<string>(),
-                                wsMMS.Cell(i, 6).GetValue<string>(),
-                            });
+                        LogWrite += $"Ошибка: несколько одинаковых марок {keyMark} \n";
                     }
                     else
                     {
-                        ExcelToSpecKompas_MMS.Add(keyMark, new List<string[]>{ new string[]
+                        ExcelToSpecKompas_MMS.Add(keyMark, new string[]
                             {
                                  wsMMS.Cell(i, 3).GetValue<string>(),
                                  wsMMS.Cell(i, 5).GetValue<string>(),
                                  wsMMS.Cell(i, 6).GetValue<string>(),
-                             }});
+                             });
+                        if (wsMMS.Cell(i, 3).GetValue<string>() == "" || wsMMS.Cell(i, 5).GetValue<string>() == "" || wsMMS.Cell(i, 6).GetValue<string>() == "")
+                        {
+                            LogWrite += $"Ошибка: проверьте данные {keyMark}. Какие то из ячеек с данными пустые. \n";
+                        }
                     }
                 }
                 #endregion
-
-
                 ProgressBar_Value = 100;
                 LogWrite += $"Загрузка Excel файла завершилась.";
             });
         }
-
+        /// <summary>
+        /// Запись данных из excel файла в спецификацию компаса
+        /// </summary>
+        /// <param name="token"></param>
+        /// <returns></returns>
         [RelayCommand(IncludeCancelCommand = true)]
         private async Task ExcelToSpecKompas_WriteToSpec(CancellationToken token)
         {
-            if (ExcelToSpecKompas_ReadExcelCommand.IsRunning)
+            if (ExcelToSpecKompas_ReadExcelCommand.IsRunning || ExcelToSpecKompas_WriteToListMarkCommand.IsRunning)
             {
-                LogWrite += "Ошибка: дождитесь завершения загрузки Excel файла\n";
+                LogWrite += "Ошибка: дождитесь завершения работы других команд\n";
                 ProgressBar_Value = 0;
                 return;
             }
@@ -1674,6 +1680,169 @@ namespace PositionApplicability.ViewModels
                 LogWrite += "Запись в спецификации завершилась.";
             }));
             
+        }
+
+        /// <summary>
+        /// Запись данных из excel файла в ведомость марок
+        /// </summary>
+        /// <param name="token"></param>
+        /// <returns></returns>
+        [RelayCommand(IncludeCancelCommand = true)]
+        private async Task ExcelToSpecKompas_WriteToListMark(CancellationToken token)
+        {
+            if (ExcelToSpecKompas_ReadExcelCommand.IsRunning || ExcelToSpecKompas_WriteToSpecCommand.IsRunning)
+            {
+                LogWrite += "Ошибка: дождитесь завершения работы других команд\n";
+                ProgressBar_Value = 0;
+                return;
+            }
+            if (ExcelToSpecKompas_MMS.Count == 0)
+            {
+                LogWrite += "Ошибка: загрузите Excel файл";
+                ProgressBar_Value = 0;
+                return;
+            }
+            LogWrite = "Начало записи в ведомость отправочных марок...\n";
+            ProgressBar_Value = 1;
+            if (!Directory.Exists(PathFolderAssembly))
+            {
+                LogWrite += "Ошибка: не найден путь к файлам сборок";
+                ProgressBar_Value = 0;
+                return;
+            }
+            List<string> pathsAssemble = new();
+            await Task.Run((() =>
+            {
+                string textSearch = "Ведомость отправочных марок";
+                SearchOption searchOptionFill;
+                if (IsAllDirectoryFill)
+                {
+                    searchOptionFill = SearchOption.AllDirectories;
+                }
+                else
+                {
+                    searchOptionFill = SearchOption.TopDirectoryOnly;
+                }
+                Info = "Запускается Компас";
+                #region Запуск Компаса
+                Type? kompasType = Type.GetTypeFromProgID("Kompas.Application.5", true);
+                PBExtraction_Value = 10;
+                if (kompasType == null)
+                {
+                    LogWrite += "Ошибка: Компас не найден в системе";
+                    ProgressBar_Value = 0;
+                    return;
+                }
+                KompasObject? kompas = Activator.CreateInstance(kompasType) as KompasObject; //Запуск компаса
+                if (kompas == null)
+                {
+                    LogWrite += "Ошибка: не получилось запустить Компас";
+                    ProgressBar_Value = 0;
+                    return;
+                }
+                ProgressBar_Value = 10;
+                if (token.IsCancellationRequested)
+                {
+                    kompas.Quit();
+                    ProgressBar_Value = 0;
+                    Info = "Отменено";
+                    return;
+                }
+                #endregion
+
+                // Открытие чертежей марок
+                foreach (string mark in ExcelToSpecKompas_MMS.Keys)
+                {
+                    if (token.IsCancellationRequested)
+                    {
+                        kompas.Quit();
+                        ProgressBar_Value = 0;
+                        Info = "Отменено";
+                        return;
+                    }
+                    ProgressBar_Value += 90.0 / ExcelToSpecKompas_MMS.Keys.Count;
+                    string pathAssemble = "";
+                    string[] paths = Directory.GetFiles(PathFolderAssembly, $"* {mark}.cdw", searchOptionFill).ToArray<string>();
+                    if (paths.Length == 0)
+                    {
+                        LogWrite += $"Ошибка: не найден файл марки {mark}\n";
+                        continue;
+                    }
+                    if (paths.Length > 1)
+                    {
+                        LogWrite += $"Ошибка: найдено больше одного файла марки {mark}. Ведомость марок в данной марке не будет заполнена.\n";
+                        continue;
+                    }
+                    pathAssemble = paths[0];
+                    if (!File.Exists(pathAssemble))
+                    {
+                        LogWrite += $"Ошибка: не найден файл марки {mark}.\n";
+                        continue;
+                    }
+                    IApplication application = (IApplication)kompas.ksGetApplication7();
+                    IDocuments documents = application.Documents;
+                    IKompasDocument2D kompasDocuments2D = (IKompasDocument2D)documents.Open(pathAssemble, false, false);
+                    if (kompasDocuments2D == null)
+                    {
+                        LogWrite += $"Ошибка: не удалось открыть чертеж {pathAssemble}.\n";
+                        continue;
+                    }
+                    Info = $"Обрабатывается {mark}";
+                    IKompasDocument2D1 kompasDocuments2D1 = (IKompasDocument2D1)kompasDocuments2D;
+                    IViewsAndLayersManager viewsAndLayersManager = kompasDocuments2D.ViewsAndLayersManager;
+                    IViews views = viewsAndLayersManager.Views;
+                    //Поиск таблицы "Ведомость отправочных марок"
+                    IDrawingTable? drawingTable = null;
+                    foreach (IView view in views)
+                    {
+                        ISymbols2DContainer symbols2DContainer = (ISymbols2DContainer)view;
+                        IDrawingTables drawingTables = symbols2DContainer.DrawingTables;
+                        foreach (IDrawingTable dwtable in drawingTables)
+                        {
+                            ITable tableSearch = (ITable)dwtable;
+                            if (((IText)tableSearch.Cell[0, 0].Text).Str.Contains(textSearch, StringComparison.CurrentCultureIgnoreCase))
+                            {
+                                drawingTable = dwtable;
+                                break;
+                            }
+                        }
+                        if (drawingTable != null) break;
+                    }
+                    if (drawingTable == null)
+                    {
+                        LogWrite += $"Ошибка: не удалось найти {textSearch} в {pathAssemble}.\n";
+                        continue;
+                    }
+                    #region Работа с таблицей
+                    ITable table = (ITable)drawingTable;                    
+                    if (table.ColumnsCount != 5 || table.RowsCount != 5)
+                    {
+                        LogWrite += $"Ошибка: не правильное количество столбцов или строк в таблице в {pathAssemble}. Должно быть по пять.";
+                        continue;
+                    }
+                    //Заполняем таблицу
+                    ((IText)table.Cell[3, 0].Text).Str = mark;
+                    ((IText)table.Cell[3, 1].Text).Str = ExcelToSpecKompas_MMS[mark][0];
+                    ((IText)table.Cell[3, 3].Text).Str = ExcelToSpecKompas_MMS[mark][1];
+                    ((IText)table.Cell[3, 4].Text).Str = ExcelToSpecKompas_MMS[mark][2];
+                    ((IText)table.Cell[4, 4].Text).Str = ExcelToSpecKompas_MMS[mark][2];
+                    drawingTable.Update();                    
+                    kompasDocuments2D.Save();
+                    if (kompasDocuments2D.Changed)
+                    {
+                        LogWrite += $"Ошибка: не удалось сохранить файл {pathAssemble}. Возможно нет права на его редактирование " +
+                        $"или он был открыт во время работы программы\n";
+                    }
+                    kompasDocuments2D.Close(DocumentCloseOptions.kdSaveChanges);
+                    #endregion
+                }
+
+                kompas.Quit();
+                ProgressBar_Value = 100;
+                Info = "";
+                LogWrite += $"Запись в {textSearch} завершилась.";
+            }));
+
         }
         #endregion
 
