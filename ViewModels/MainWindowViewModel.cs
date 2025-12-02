@@ -1724,14 +1724,14 @@ namespace PositionApplicability.ViewModels
             await Task.Run((() =>
             {
                 string textSearch = "Ведомость отправочных марок";
-                SearchOption searchOptionFill;
-                if (IsAllDirectoryFill)
+                SearchOption searchOptionExtraction;
+                if (IsAllDirectoryExtraction)
                 {
-                    searchOptionFill = SearchOption.AllDirectories;
+                    searchOptionExtraction = SearchOption.AllDirectories;
                 }
                 else
                 {
-                    searchOptionFill = SearchOption.TopDirectoryOnly;
+                    searchOptionExtraction = SearchOption.TopDirectoryOnly;
                 }
                 Info = "Запускается Компас";
                 #region Запуск Компаса
@@ -1772,7 +1772,7 @@ namespace PositionApplicability.ViewModels
                     }
                     ProgressBar_Value += 90.0 / ExcelToSpecKompas_MMS.Keys.Count;
                     string pathAssemble = "";
-                    string[] paths = Directory.GetFiles(PathFolderAssembly, $"* {mark}.cdw", searchOptionFill).ToArray<string>();
+                    string[] paths = Directory.GetFiles(PathFolderAssembly, $"* {mark}.cdw", searchOptionExtraction).ToArray<string>();
                     if (paths.Length == 0)
                     {
                         LogWrite += $"Ошибка: не найден файл марки {mark}\n";
