@@ -29,6 +29,12 @@ namespace PositionApplicability.ViewModels
         [ObservableProperty]
         private double _widthWindow = Properties.Settings.Default.Width;
         #endregion
+
+        /// <summary>
+        /// Путь к папке
+        /// </summary>
+        [ObservableProperty]
+        private string _pathFolder = "";
         /// <summary>
         /// Путь к сборкам
         /// </summary>
@@ -439,6 +445,20 @@ namespace PositionApplicability.ViewModels
             if (dialog.ShowDialog() == DialogResult.OK)
             {
                 PathFolderPos = dialog.SelectedPath;
+            }
+        }
+
+        /// <summary>
+        /// Выбор пути к папке
+        /// </summary>
+        [RelayCommand]
+        private void OpenFolderDialog()
+        {
+            FolderBrowserDialog dialog = new();
+
+            if (dialog.ShowDialog() == DialogResult.OK)
+            {
+                PathFolder = dialog.SelectedPath;
             }
         }
 
@@ -1857,6 +1877,140 @@ namespace PositionApplicability.ViewModels
         }
         #endregion
 
+        #region Ведомость ревизий
+        [RelayCommand(IncludeCancelCommand = true)]
+        private async Task CreatListRev(CancellationToken token)
+        {
+            if (!Directory.Exists(PathFolder))
+            {
+                Info = "Не верный путь к сборкам";
+                return;
+            }
+            Log.Clear();
+            Info = "Начало создания ведомости редакций";
+            PBExtraction_Value = 1;
+            string[] drawings;
+            if (IsAllDirectoryFill)
+            {
+                drawings = Directory.GetFiles(PathFolder, "*.cdw", SearchOption.AllDirectories);
+            }
+            else
+            {
+                drawings = Directory.GetFiles(PathFolder, "*.cdw", SearchOption.TopDirectoryOnly);
+            }
+            if (drawings.Length == 0)
+            {
+                Info = "Не найдены чертежи";
+                return;
+            }
+            await Task.Run(() =>
+            {
+                Type? kompasType = Type.GetTypeFromProgID("Kompas.Application.5", true);
+                PBExtraction_Value = 10;
+                if (kompasType == null) return;
+                KompasObject? kompas = Activator.CreateInstance(kompasType) as KompasObject; //Запуск компаса
+                if (kompas == null) return;
+                if (token.IsCancellationRequested)
+                {
+                    kompas.Quit();
+                    PBExtraction_Value = 0;
+                    Info = "Операция отменена";
+                    return;
+                }
+                IApplication application = (IApplication)kompas.ksGetApplication7();
+                IDocuments documents = application.Documents;
+                List<string[]> revList = new();
+                foreach (string pathfile in drawings)
+                {
+                    IKompasDocument2D kompasDocuments2D = (IKompasDocument2D)documents.Open(pathfile, false, false);
+                    if (kompasDocuments2D == null)
+                    {
+                        Log.Add($"{pathfile} - не удалось открыть чертеж");
+                        continue;
+                    }
+                    ILayoutSheets layoutSheets = kompasDocuments2D.LayoutSheets;
+                    foreach (ILayoutSheet layoutSheet in layoutSheets)
+                    {
+                        int revNumber = 0;
+                        string revData = "";                        
+
+                        IStamp stamp = layoutSheet.Stamp;
+                        string list = stamp.Text[7].Str;
+                        string nameDrawing = stamp.Text[2].Str;
+
+                        for (int i = 0; i < 4; i++)
+                        {
+                            if (int.TryParse(stamp.Text[140 + i].Str, out int number))
+                            {
+                                if (number > revNumber)
+                                {
+                                    revNumber = number;
+                                    revData = stamp.Text[180 + i].Str;
+                                }
+                            }
+
+                        }
+                    revList.Add(new string[] {list, nameDrawing, revNumber.ToString(), revData });
+                    }
+                    kompasDocuments2D.Close(DocumentCloseOptions.kdSaveChanges);
+                    if (token.IsCancellationRequested)
+                    {
+                        kompas.Quit();
+                        PBExtraction_Value = 0;
+                        Info = "Операция отменена";
+                        return;
+                    }
+                    PBExtraction_Value += 90 / drawings.Length;
+                }
+                kompas.Quit();
+                PBExtraction_Value = 100;
+                WriteLog();
+                Info = "Ведомость создана";
+                if (Log.Count > 0)
+                {
+                    Info += "Есть ошибки, посмотрите журнал.";
+                }
+                #region Сохранить в эксель
+                //Сортировка списка по номеру позиции
+                XLWorkbook workbook = new();
+                IXLWorksheet worksheetPos = workbook.Worksheets.Add("Ведомость рев.");
+                #region Формирование шапки листа
+                worksheetPos.Cell(1, 1).SetValue("Лист №");
+                worksheetPos.Cell(1, 2).SetValue("Наименование");
+                worksheetPos.Cell(1, 3).SetValue("Рев.");
+                worksheetPos.Cell(1, 4).SetValue("Дата");
+                #endregion
+                if (worksheetPos != null)
+                {
+                    for (int i = 0; i < revList.Count; i++)
+                    { 
+                        worksheetPos.Cell(i + 2, 1).SetValue(revList[i][0]); //Номер листа
+                        worksheetPos.Cell(i + 2, 2).SetValue(revList[i][1]); //Наименование документа
+                        worksheetPos.Cell(i + 2, 3).SetValue(revList[i][2]); //Номер ревизии
+                        worksheetPos.Cell(i + 2, 4).SetValue(revList[i][3]); //Дата
+                    }
+                    worksheetPos.DataType = XLDataType.Text;
+                    //Ширина колонки по содержимому
+                    worksheetPos.Columns(1, 4).AdjustToContents(5.0, 100.0);                    
+                    worksheetPos.Columns(1, 4).Style.Alignment.SetHorizontal(XLAlignmentHorizontalValues.Center);
+                    worksheetPos.Columns(1, 4).Style.Alignment.SetVertical(XLAlignmentVerticalValues.Center);
+                }
+                try
+                {
+                    workbook.SaveAs($"{PathFolder}\\Ведомость рев..xlsx");
+                }
+                catch (Exception)
+                {
+                    Info = "Не удалось сохранить файл";
+                    return;
+                }
+                Info = "Файл сохранен"; 
+                #endregion
+            }, token);
+
+            OpenLogCommand.NotifyCanExecuteChanged();
+        }
+        #endregion
 
         [RelayCommand]
         private void OpenTxT(string file)

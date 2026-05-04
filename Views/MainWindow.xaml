@@ -182,6 +182,22 @@
                     <TextBox Text="{Binding LogWrite}" Height="100" VerticalContentAlignment="Top" VerticalScrollBarVisibility="Auto" IsReadOnly="True" TextWrapping="WrapWithOverflow" TextChanged="TextBox_TextChanged"/>
                 </StackPanel>
             </TabItem>
+
+            <TabItem Header="Ведомость рев.">
+                <StackPanel Grid.Row="0" Orientation="Vertical">
+                    <DockPanel>
+                        <Button Content="Указать путь к чертежам:" Padding="3" Margin="3"  Command="{Binding OpenFolderDialogCommand}"/>
+                        <TextBox Height="25" Padding="3" Margin="3" Text="{Binding PathFolder}"/>
+                    </DockPanel>
+                    <ProgressBar Height="25" Value = "{Binding ProgressBar_Value}"/>
+                    <StackPanel Orientation="Horizontal" HorizontalAlignment="Center">
+                        <CheckBox Content="В подпапках" IsChecked="{Binding IsAllDirectoryExtraction}" VerticalContentAlignment="Center" VerticalAlignment="Center" Padding="3" Margin="3"/>
+                        <Button Content="Создать" Padding="5,5" Command="{Binding CreatListRevCommand}"/>
+                        <Button Content="Отмена" HorizontalAlignment="Center" Padding="3" Margin="3" Command="{Binding CreatListRevCancelCommand}"/>
+                    </StackPanel>
+                </StackPanel>
+            </TabItem>
+
         </TabControl>
         <Button Grid.Row="1" Content="Журнал" Padding="5,5" Margin="10,0" HorizontalAlignment="Right" Command="{Binding OpenLogCommand}"/>
         <StatusBar Grid.Row="2">
