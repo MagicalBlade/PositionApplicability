@@ -191,7 +191,7 @@
                     </DockPanel>
                     <ProgressBar Height="25" Value = "{Binding ProgressBar_Value}"/>
                     <StackPanel Orientation="Horizontal" HorizontalAlignment="Center">
-                        <CheckBox Content="В подпапках" IsChecked="{Binding IsAllDirectoryExtraction}" VerticalContentAlignment="Center" VerticalAlignment="Center" Padding="3" Margin="3"/>
+                        <CheckBox Content="В подпапках" IsChecked="{Binding IsAllDirectoryFill}" VerticalContentAlignment="Center" VerticalAlignment="Center" Padding="3" Margin="3"/>
                         <Button Content="Создать" Padding="5,5" Command="{Binding CreatListRevCommand}"/>
                         <Button Content="Отмена" HorizontalAlignment="Center" Padding="3" Margin="3" Command="{Binding CreatListRevCancelCommand}"/>
                     </StackPanel>
