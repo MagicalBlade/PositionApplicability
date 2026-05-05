@@ -26,5 +26,8 @@
     <Setting Name="StrSearchTableMark" Type="System.String" Scope="User">
       <Value Profile="(Default)">Ведомость отправочных марок</Value>
     </Setting>
+    <Setting Name="PathFolder" Type="System.String" Scope="User">
+      <Value Profile="(Default)" />
+    </Setting>
   </Settings>
 </SettingsFile>

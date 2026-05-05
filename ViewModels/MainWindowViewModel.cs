@@ -34,7 +34,7 @@ namespace PositionApplicability.ViewModels
         /// Путь к папке
         /// </summary>
         [ObservableProperty]
-        private string _pathFolder = "";
+        private string _pathFolder = Properties.Settings.Default.PathFolder;
         /// <summary>
         /// Путь к сборкам
         /// </summary>
@@ -1883,11 +1883,11 @@ namespace PositionApplicability.ViewModels
         {
             if (!Directory.Exists(PathFolder))
             {
-                Info = "Не верный путь к сборкам";
+                Info = "Не верный путь к чертежам";
                 return;
             }
             Log.Clear();
-            Info = "Начало создания ведомости редакций";
+            Info = "Начало создания ведомости ревизий";
             PBExtraction_Value = 1;
             string[] drawings;
             if (IsAllDirectoryFill)
@@ -1932,12 +1932,10 @@ namespace PositionApplicability.ViewModels
                     foreach (ILayoutSheet layoutSheet in layoutSheets)
                     {
                         int revNumber = 0;
-                        string revData = "";                        
-
+                        string revData = "";
                         IStamp stamp = layoutSheet.Stamp;
-                        string list = stamp.Text[7].Str;
+                        string list = stamp.Text[16001].Str;
                         string nameDrawing = stamp.Text[2].Str;
-
                         for (int i = 0; i < 4; i++)
                         {
                             if (int.TryParse(stamp.Text[140 + i].Str, out int number))
@@ -1948,11 +1946,10 @@ namespace PositionApplicability.ViewModels
                                     revData = stamp.Text[180 + i].Str;
                                 }
                             }
-
                         }
-                    revList.Add(new string[] {list, nameDrawing, revNumber.ToString(), revData });
+                        revList.Add(new string[] {list, nameDrawing, revNumber.ToString(), revData });
                     }
-                    kompasDocuments2D.Close(DocumentCloseOptions.kdSaveChanges);
+                    kompasDocuments2D.Close(DocumentCloseOptions.kdDoNotSaveChanges);
                     if (token.IsCancellationRequested)
                     {
                         kompas.Quit();
@@ -1963,41 +1960,58 @@ namespace PositionApplicability.ViewModels
                     PBExtraction_Value += 90 / drawings.Length;
                 }
                 kompas.Quit();
-                PBExtraction_Value = 100;
-                WriteLog();
-                Info = "Ведомость создана";
-                if (Log.Count > 0)
-                {
-                    Info += "Есть ошибки, посмотрите журнал.";
-                }
                 #region Сохранить в эксель
-                //Сортировка списка по номеру позиции
+                string pathExcel = $"{PathFolder}\\Ведомость рев.xlsx";
                 XLWorkbook workbook = new();
-                IXLWorksheet worksheetPos = workbook.Worksheets.Add("Ведомость рев.");
+                IXLWorksheet worksheet = workbook.Worksheets.Add("Ведомость рев.");
                 #region Формирование шапки листа
-                worksheetPos.Cell(1, 1).SetValue("Лист №");
-                worksheetPos.Cell(1, 2).SetValue("Наименование");
-                worksheetPos.Cell(1, 3).SetValue("Рев.");
-                worksheetPos.Cell(1, 4).SetValue("Дата");
+                worksheet.Cell(1, 1).SetValue("Лист №");
+                worksheet.Cell(1, 2).SetValue("Наименование");
+                worksheet.Cell(1, 3).SetValue("Рев.");
+                worksheet.Cell(1, 4).SetValue("Дата");
                 #endregion
-                if (worksheetPos != null)
+                if (worksheet != null)
                 {
                     for (int i = 0; i < revList.Count; i++)
                     { 
-                        worksheetPos.Cell(i + 2, 1).SetValue(revList[i][0]); //Номер листа
-                        worksheetPos.Cell(i + 2, 2).SetValue(revList[i][1]); //Наименование документа
-                        worksheetPos.Cell(i + 2, 3).SetValue(revList[i][2]); //Номер ревизии
-                        worksheetPos.Cell(i + 2, 4).SetValue(revList[i][3]); //Дата
+                        worksheet.Cell(i + 2, 1).SetValue(revList[i][0]); //Номер листа
+                        worksheet.Cell(i + 2, 2).SetValue(revList[i][1]); //Наименование документа
+                        worksheet.Cell(i + 2, 3).SetValue(revList[i][2]); //Номер ревизии
+                        worksheet.Cell(i + 2, 4).SetValue(revList[i][3]); //Дата
                     }
-                    worksheetPos.DataType = XLDataType.Text;
+                    worksheet.DataType = XLDataType.Text;
                     //Ширина колонки по содержимому
-                    worksheetPos.Columns(1, 4).AdjustToContents(5.0, 100.0);                    
-                    worksheetPos.Columns(1, 4).Style.Alignment.SetHorizontal(XLAlignmentHorizontalValues.Center);
-                    worksheetPos.Columns(1, 4).Style.Alignment.SetVertical(XLAlignmentVerticalValues.Center);
+                    worksheet.Columns(1, 4).AdjustToContents(5.0, 100.0);                    
+                    worksheet.Columns(1, 4).Style.Alignment.SetHorizontal(XLAlignmentHorizontalValues.Center);
+                    worksheet.Columns(1, 4).Style.Alignment.SetVertical(XLAlignmentVerticalValues.Center);
+                }
+                //Проверка наличия файла
+                if (File.Exists(pathExcel))
+                {
+                    DialogResult dialogResult = MessageBox.Show("Файл Ведомость рев.xlsx существует, заменить?", "Ошибка", MessageBoxButtons.YesNoCancel);
+                    switch (dialogResult)
+                    {                        
+                        case DialogResult.Cancel:
+                            PBExtraction_Value = 0;
+                            Info = "Операция отменена";
+                            return;
+                        case DialogResult.Yes:
+                            break;
+                        case DialogResult.No:
+                            string newpathExcel = "";
+                            int nameinc = 0;
+                            do
+                            {
+                                nameinc++;
+                                newpathExcel = $"{pathExcel.Substring(0, pathExcel.Length - 5)}{nameinc}{".xlsx"}";
+                            } while (File.Exists(newpathExcel));
+                            pathExcel = newpathExcel;
+                            break;                        
+                    }
                 }
                 try
                 {
-                    workbook.SaveAs($"{PathFolder}\\Ведомость рев..xlsx");
+                    workbook.SaveAs(pathExcel);
                 }
                 catch (Exception)
                 {
@@ -2006,8 +2020,14 @@ namespace PositionApplicability.ViewModels
                 }
                 Info = "Файл сохранен"; 
                 #endregion
+                PBExtraction_Value = 100;
+                WriteLog();
+                Info = "Ведомость создана";
+                if (Log.Count > 0)
+                {
+                    Info += "Есть ошибки, посмотрите журнал.";
+                }
             }, token);
-
             OpenLogCommand.NotifyCanExecuteChanged();
         }
         #endregion
@@ -2343,6 +2363,7 @@ namespace PositionApplicability.ViewModels
             Properties.Settings.Default.IsAllDirectoryExtraction = IsAllDirectoryExtraction;
             Properties.Settings.Default.IsAllDirectoryFill = IsAllDirectoryFill;
             Properties.Settings.Default.StrSearchTableMark = StrSearchTableMark;
+            Properties.Settings.Default.PathFolder = PathFolder;
             Properties.Settings.Default.Save();
         }
 
